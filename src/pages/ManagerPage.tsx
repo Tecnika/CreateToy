@@ -1,5 +1,6 @@
 import { ClipboardList, Mail } from 'lucide-react';
 import { OrdersManager } from '../components/admin/OrdersManager';
+import { ManagerNav } from '../components/manager/ManagerNav';
 import { PageHero } from '../components/ui/PageHero';
 import { useAuth } from '../state/AuthContext';
 import { useSettings } from '../state/SettingsContext';
@@ -20,7 +21,7 @@ export function ManagerPage() {
             <div className="rounded-3xl border border-line bg-surface-2/60 p-5">
               <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted">Вы вошли как</p>
               <p className="mt-1 font-display text-lg font-semibold">{user?.displayName}</p>
-              <p className="text-xs text-muted">Менеджер · обработка заказов</p>
+              <p className="text-xs text-muted">Менеджер · заказы и каталог</p>
             </div>
             <a href={`mailto:${settings.contactEmail}`} className="btn-secondary w-full text-xs">
               <Mail size={15} /> Почта магазина
@@ -29,7 +30,9 @@ export function ManagerPage() {
         }
       />
 
-      <section className="container-page mt-8">
+      <ManagerNav />
+
+      <section className="container-page mt-6">
         <div className="mb-4 flex items-center gap-2 text-xs font-bold text-muted">
           <ClipboardList size={16} className="text-accent" />
           Выберите заказ в списке, чтобы изменить статус или добавить доставку

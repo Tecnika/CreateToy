@@ -16,6 +16,7 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage').then((module) => 
 const AccountPage = lazy(() => import('./pages/AccountPage').then((module) => ({ default: module.AccountPage })));
 const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage').then((module) => ({ default: module.OrderDetailPage })));
 const ManagerPage = lazy(() => import('./pages/ManagerPage').then((module) => ({ default: module.ManagerPage })));
+const ManagerProductsPage = lazy(() => import('./pages/ManagerProductsPage').then((module) => ({ default: module.ManagerProductsPage })));
 const HolidaysPage = lazy(() => import('./pages/HolidaysPage').then((module) => ({ default: module.HolidaysPage })));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage').then((module) => ({ default: module.HowItWorksPage })));
 const ContactsPage = lazy(() => import('./pages/ContactsPage').then((module) => ({ default: module.ContactsPage })));
@@ -78,6 +79,14 @@ export default function App() {
               element={
                 <RequireAuth role="staff">
                   <ManagerPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="manager/products"
+              element={
+                <RequireAuth role="staff">
+                  <ManagerProductsPage />
                 </RequireAuth>
               }
             />

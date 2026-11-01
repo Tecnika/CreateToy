@@ -35,8 +35,7 @@ export type ConfiguratorFieldType =
   | 'select'
   | 'color'
   | 'number'
-  | 'checkbox'
-  | 'image';
+  | 'checkbox';
 
 export type ConfiguratorValue = string | number | boolean;
 export type ConfiguratorValues = Record<string, ConfiguratorValue>;

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Check, ChevronRight, ImagePlus, ShoppingBag, Sparkles } from 'lucide-react';
+import { Check, ChevronRight, ShoppingBag, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { ConfiguratorField, ConfiguratorValues, Product } from '../../core/domain/types';
 import type { ConfiguratorTemplate } from '../../core/domain/ConfiguratorTemplate';
@@ -250,20 +250,6 @@ function FieldControl({
           max={field.max}
           onChange={(event) => onChange(Number(event.target.value))}
         />
-      </div>
-    );
-  }
-
-  if (field.type === 'image') {
-    return (
-      <div>
-        <FieldLabel field={field} />
-        <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface px-4 py-8 text-center transition hover:border-accent/60">
-          <ImagePlus size={22} className="text-accent" />
-          <span className="mt-2 text-xs font-bold">Загрузить изображение</span>
-          <span className="mt-1 text-[11px] text-muted">PNG, JPG или SVG до 10 МБ</span>
-          <input type="file" className="hidden" accept="image/*" onChange={() => onChange('uploaded')} />
-        </label>
       </div>
     );
   }

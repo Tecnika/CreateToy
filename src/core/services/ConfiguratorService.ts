@@ -3,13 +3,20 @@ import { ConfiguratorTemplate } from '../domain/ConfiguratorTemplate';
 import type { ConfiguratorTemplateData } from '../domain/types';
 import type { TemplateRepository } from '../repositories/types';
 
+const LEGACY_UPLOAD_FIELD = 'image';
+
+function withoutLegacyUploads(data: ConfiguratorTemplateData): ConfiguratorTemplateData {
+  const fields = data.fields.filter((field) => (field.type as string) !== LEGACY_UPLOAD_FIELD);
+  return fields.length === data.fields.length ? data : { ...data, fields };
+}
+
 export class ConfiguratorService {
   constructor(private readonly repository: TemplateRepository) {}
 
   list(): ConfiguratorTemplate[] {
     const custom = this.repository
       .listCustom()
-      .map((data) => new ConfiguratorTemplate({ ...data, isCustom: true }));
+      .map((data) => new ConfiguratorTemplate({ ...withoutLegacyUploads(data), isCustom: true }));
     const customIds = new Set(custom.map((template) => template.id));
     return [...TEMPLATES.filter((template) => !customIds.has(template.id)), ...custom];
   }
@@ -19,7 +26,7 @@ export class ConfiguratorService {
   }
 
   save(data: ConfiguratorTemplateData): ConfiguratorTemplate {
-    const stored: ConfiguratorTemplateData = { ...data, isCustom: true };
+    const stored: ConfiguratorTemplateData = { ...withoutLegacyUploads(data), isCustom: true };
     const template = new ConfiguratorTemplate(stored);
     this.repository.saveCustom(stored);
     return template;

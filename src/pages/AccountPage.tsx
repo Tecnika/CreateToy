@@ -144,7 +144,7 @@ export function AccountPage() {
               {isStaff && (
                 <LinkButton to={isAdmin ? '/admin' : '/manager'} variant="secondary" className="px-3 py-2 text-xs">
                   <LayoutDashboard size={14} />
-                  {isAdmin ? 'Админка' : 'Заказы'}
+                  {isAdmin ? 'Админка' : 'Кабинет'}
                 </LinkButton>
               )}
               <button type="button" onClick={handleSignOut} className="btn-ghost px-3 py-2 text-xs">

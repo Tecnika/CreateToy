@@ -15,7 +15,6 @@ const fieldTypes: { id: ConfiguratorFieldType; label: string }[] = [
   { id: 'color', label: 'Выбор цвета' },
   { id: 'number', label: 'Число' },
   { id: 'checkbox', label: 'Галочка' },
-  { id: 'image', label: 'Загрузка изображения' },
 ];
 
 function optionsToText(options?: ConfiguratorOption[]): string {

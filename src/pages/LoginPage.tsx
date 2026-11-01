@@ -14,7 +14,7 @@ function homeFor(user: UserProfile): string {
 
 const demoAccounts: { role: Role; title: string; description: string }[] = [
   { role: 'buyer', title: 'Покупатель', description: 'Корзина, заказы и адреса' },
-  { role: 'manager', title: 'Менеджер', description: 'Заказы и статусы' },
+  { role: 'manager', title: 'Менеджер', description: 'Заказы, статусы и товары' },
   { role: 'admin', title: 'Администратор', description: 'Всё управление сайтом' },
 ];
 

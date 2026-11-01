@@ -77,7 +77,7 @@ winget install Microsoft.OpenJDK.21
 5. В Authentication включите:
    - Email/Password;
    - Google.
-6. Storage на Spark не создаём: для новых проектов Cloud Storage требует Blaze. В текущем MVP загрузка изображений — заглушка, поэтому Storage не нужен.
+6. Storage на Spark не создаём: для новых проектов Cloud Storage требует Blaze. В текущем MVP загрузки покупателей не используются, а карточки товаров показывают встроенную графику, поэтому Storage не нужен.
 7. В Project settings → General → Your apps создайте Web app.
 8. Скопируйте Firebase web config. Это публичные значения, не секрет.
 9. В Project settings → Service accounts нажмите Generate new private key.
