@@ -6,8 +6,9 @@
 - Локальная папка: `D:\GitHub\Sites\CreateToy`
 - Git инициализирован, remote `origin` настроен.
 - GitHub-токен проверен: есть доступ к репозиторию, права push/admin, Actions и Secrets.
-- Репозиторий публичный и пока пустой.
-- GitHub Pages ещё не включён — включим, когда появится первый workflow.
+- Репозиторий публичный, ветка `main` запушена.
+- GitHub Pages включён: сайт собирается workflow и публикуется из ветки `gh-pages`.
+- Демо-версия доступна: `https://tecnika.github.io/CreateToy/`.
 - Firebase-проект ещё не создан.
 - Секреты лежат в `.secrets/credentials.env`; папка `.secrets/` добавлена в `.gitignore`.
 
@@ -28,7 +29,7 @@ node -v
 npm -v
 ```
 
-Нужен Node.js 20 или новее.
+Нужен Node.js 24.12 или новее: этого требует Firebase SDK. Именно эта версия используется в GitHub Actions.
 
 ### Git
 
@@ -186,17 +187,20 @@ Blaze можно добавить позже без переделки фрон�
 
 Репозиторий: `https://github.com/Tecnika/CreateToy`
 
-Будущий адрес GitHub Pages:
+Адрес GitHub Pages:
 
 ```text
 https://tecnika.github.io/CreateToy/
 ```
 
-После добавления workflow:
+Как это устроено:
 
-1. GitHub → Settings → Pages.
-2. Source: **GitHub Actions**.
-3. Первый push в `main` запустит сборку и деплой.
+1. Push в `main` запускает `.github/workflows/deploy-pages.yml`.
+2. Workflow ставит зависимости, запускает тесты и собирает проект с базовым путём `/CreateToy/`.
+3. Содержимое `dist/` вместе с `404.html` и `.nojekyll` публикуется в ветку `gh-pages`.
+4. GitHub Pages собирает сайт из `gh-pages` (Source: **Deploy from a branch**, branch `gh-pages`, folder `/`).
+
+Первый деплой уже выполнен. Прямые ссылки вроде `/CreateToy/catalog` работают через `404.html`.
 
 Firebase Hosting будет основным адресом, GitHub Pages — зеркалом.
 
@@ -211,12 +215,12 @@ Firebase Hosting будет основным адресом, GitHub Pages — з
 
 ## 9. Следующий шаг
 
-После создания Firebase-проекта и заполнения `FIREBASE_PROJECT_ID`:
+Фронтенд, демо-данные, роли, конфигуратор, темы и GitHub Pages уже готовы. После создания Firebase-проекта и заполнения `FIREBASE_PROJECT_ID`:
 
-1. Я подключаю Auth, Firestore, Storage и Hosting.
-2. Создаю доменное ядро и интерфейс.
-3. Настраиваю роли, товары, конфигуратор, корзину и заказы.
-4. Добавляю темы праздников.
-5. Настраиваю GitHub Actions и деплой.
+1. Подключить Firebase Auth, Firestore, Storage и Hosting.
+2. Заменить localStorage-репозитории на Firebase-адаптеры в `src/core/container.ts`.
+3. Настроить security rules, индексы и создание администратора `Administrator`.
+4. Проверить роли и заказы на реальных данных.
+5. Задеплоить Firebase Hosting и оставить GitHub Pages зеркалом.
 
-Если Firebase пока нет, можно начать с фронтенда на mock-сервисах, а Firebase подключить позже.
+До подключения Firebase проект полностью работает в демо-режиме без внешних сервисов.
