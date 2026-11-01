@@ -64,9 +64,11 @@ npm run dev
 | --- | --- |
 | Покупатель | `buyer@createtoy.local` |
 | Менеджер | `manager@createtoy.local` |
-| Администратор | `admin@createtoy.local` |
+| Администратор | `Administrator` (или `admin@createtoy.local`) |
 
 Демо-данные (пользователи, товары, заказы, темы, настройки) создаются автоматически при первом запуске и сохраняются с префиксом `createtoy:` в `localStorage`.
+
+Пароль реального администратора `Administrator` для Firebase хранится только в `.secrets/credentials.env`; в демо-режиме используется `demo1234`.
 
 Сбросить демо-состояние можно из консоли браузера:
 
