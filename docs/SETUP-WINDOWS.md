@@ -77,7 +77,7 @@ winget install Microsoft.OpenJDK.21
 5. В Authentication включите:
    - Email/Password;
    - Google.
-6. В Storage создайте default bucket.
+6. Storage на Spark не создаём: для новых проектов Cloud Storage требует Blaze. В текущем MVP загрузка изображений — заглушка, поэтому Storage не нужен.
 7. В Project settings → General → Your apps создайте Web app.
 8. Скопируйте Firebase web config. Это публичные значения, не секрет.
 9. В Project settings → Service accounts нажмите Generate new private key.
@@ -156,7 +156,7 @@ firebase projects:list
 
 В Firebase два основных плана:
 
-- **Spark** — бесплатный. Доступны Auth, Firestore, Storage, Hosting. Для старта хватает.
+- **Spark** — бесплатный. Доступны Auth, Firestore, Hosting. Cloud Storage для новых проектов недоступен — нужен Blaze.
 - **Blaze** — pay-as-you-go. Нужна привязанная карта. Внутри Blaze есть бесплатные лимиты, платите только за превышение.
 
 **Cloud Functions требуют Blaze.** Functions нужны для:
@@ -176,6 +176,7 @@ firebase projects:list
 
 Ограничения без Blaze:
 
+- Cloud Storage недоступен для новых проектов;
 - нет автоматических писем (только in-app и `mailto:`);
 - роль администратора создаётся локальным скриптом с service account;
 - custom claims не используются, роли хранятся в Firestore;
@@ -217,10 +218,12 @@ Firebase Hosting будет основным адресом, GitHub Pages — з
 
 Фронтенд, демо-данные, роли, конфигуратор, темы и GitHub Pages уже готовы. После создания Firebase-проекта и заполнения `FIREBASE_PROJECT_ID`:
 
-1. Подключить Firebase Auth, Firestore, Storage и Hosting.
+1. Подключить Firebase Auth, Firestore и Hosting. Storage пропустить: на Spark он недоступен.
 2. Заменить localStorage-репозитории на Firebase-адаптеры в `src/core/container.ts`.
 3. Настроить security rules, индексы и создание администратора `Administrator`.
 4. Проверить роли и заказы на реальных данных.
 5. Задеплоить Firebase Hosting и оставить GitHub Pages зеркалом.
 
 До подключения Firebase проект полностью работает в демо-режиме без внешних сервисов.
+
+Пошаговая инструкция именно для Spark: [`FIREBASE-SPARK.md`](FIREBASE-SPARK.md).

@@ -144,27 +144,28 @@ npm run build
 npm run preview
 ```
 
-## Firebase: что дальше
+## Firebase на Spark
 
-Проект рассчитан на бесплатный план **Spark**. Firebase-проект ещё не создан, поэтому реальные Auth, Firestore, Storage и Hosting пока не подключены.
+Проект рассчитан на бесплатный план **Spark**. Firebase-проект ещё не создан, поэтому реальные Auth, Firestore и Hosting пока не подключены.
 
 Когда появятся credentials:
 
-1. Создать Firebase-проект и Firestore в `europe-west3`.
+1. Создать Firebase-проект на Spark и Firestore в `europe-west3`.
 2. Включить Email/Password и Google в Authentication.
-3. Заполнить `.secrets/credentials.env` и сохранить service account JSON в `.secrets/`.
+3. Заполнить `.env.local` (web config) и `.secrets/credentials.env` (service account, admin).
 4. Реализовать Firebase-адаптеры Auth и репозиториев, правила Firestore и индексы.
 5. Создать администратора `Administrator` локальным seed-скриптом.
 6. Задеплоить Hosting командой `firebase deploy --only hosting`.
 
-Ограничения Spark без Cloud Functions:
+Ограничения Spark:
 
-- нет автоматических писем — менеджер связывается с покупателем вручную;
-- роли хранятся в Firestore и проверяются security rules, а не через custom claims;
-- администратор создаётся локальным скриптом с service account;
-- сложные серверные проверки и автоматизация оплаты откладываются.
+- **Storage недоступен для новых проектов** — для него нужен Blaze. Загрузка изображений в конфигураторе пока остаётся заглушкой.
+- **Cloud Functions требуют Blaze** — нет автоматических писем, custom claims и серверной проверки оплаты.
+- Роли хранятся в Firestore и проверяются security rules, а не через custom claims.
+- Администратор создаётся локальным скриптом с service account.
+- Сложные серверные проверки и автоматизация оплаты откладываются.
 
-Подробная инструкция по Windows и Firebase: [`docs/SETUP-WINDOWS.md`](docs/SETUP-WINDOWS.md).
+Подробная пошаговая инструкция: [`docs/FIREBASE-SPARK.md`](docs/FIREBASE-SPARK.md). Общая настройка Windows: [`docs/SETUP-WINDOWS.md`](docs/SETUP-WINDOWS.md).
 
 ## Безопасность
 
