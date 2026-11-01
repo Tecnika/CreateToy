@@ -47,7 +47,7 @@
 
 ## Быстрый старт
 
-Требуется Node.js 20+.
+Требуется Node.js 24.12+ (этого требует Firebase SDK).
 
 ```powershell
 npm install
