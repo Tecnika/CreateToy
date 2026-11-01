@@ -126,11 +126,13 @@ Workflow `.github/workflows/deploy-pages.yml` запускается при push
 2. Запускает тесты.
 3. Собирает проект с базовым путём `/<имя-репозитория>/`.
 4. Копирует `dist/index.html` в `dist/404.html` для SPA-маршрутов и добавляет `.nojekyll`.
-5. Публикует `dist/` через GitHub Pages.
+5. Публикует содержимое `dist/` в ветку `gh-pages` от имени GitHub Actions.
 
-В настройках репозитория: **Settings → Pages → Source: GitHub Actions**.
+В настройках репозитория: **Settings → Pages → Source: Deploy from a branch → Branch: `gh-pages` / root**. GitHub Pages пересобирает сайт после каждого обновления ветки.
 
 Адрес сайта: <https://tecnika.github.io/CreateToy/>.
+
+Первый деплой уже выполнен. Прямые ссылки вроде `/CreateToy/catalog` работают через `404.html`.
 
 Для локальной проверки сборки с тем же базовым путём:
 
