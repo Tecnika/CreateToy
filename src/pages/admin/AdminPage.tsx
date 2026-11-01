@@ -1,4 +1,4 @@
-import { ArrowRight, Boxes, ClipboardList, Palette, Settings, Sparkles, TrendingUp, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, Boxes, ClipboardList, Palette, Settings, Sparkles, TrendingUp, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { services } from '../../core/container';
 import { Money } from '../../core/domain/Money';
@@ -112,6 +112,9 @@ export function AdminPage() {
               </Link>
               <Link to="/admin/settings" className="flex items-center justify-between rounded-2xl border border-line px-3 py-2.5 text-xs font-bold transition hover:border-accent/50 hover:bg-surface-2">
                 Контакты и доставка <Settings size={14} className="text-accent" />
+              </Link>
+              <Link to="/admin/guide" className="flex items-center justify-between rounded-2xl border border-line px-3 py-2.5 text-xs font-bold transition hover:border-accent/50 hover:bg-surface-2">
+                Инструкция для команды <BookOpen size={14} className="text-accent" />
               </Link>
             </div>
           </div>

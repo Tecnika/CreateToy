@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   ArrowLeft,
+  BookOpen,
   Boxes,
   ClipboardList,
   LayoutDashboard,
@@ -21,6 +22,7 @@ const navItems = [
   { to: '/admin/themes', label: 'Праздники', icon: Palette },
   { to: '/admin/users', label: 'Пользователи', icon: Users },
   { to: '/admin/settings', label: 'Настройки', icon: Settings },
+  { to: '/admin/guide', label: 'Инструкция', icon: BookOpen },
 ];
 
 export function AdminShell() {

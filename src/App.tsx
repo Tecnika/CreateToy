@@ -17,6 +17,7 @@ const AccountPage = lazy(() => import('./pages/AccountPage').then((module) => ({
 const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage').then((module) => ({ default: module.OrderDetailPage })));
 const ManagerPage = lazy(() => import('./pages/ManagerPage').then((module) => ({ default: module.ManagerPage })));
 const ManagerProductsPage = lazy(() => import('./pages/ManagerProductsPage').then((module) => ({ default: module.ManagerProductsPage })));
+const StaffGuidePage = lazy(() => import('./pages/StaffGuidePage').then((module) => ({ default: module.StaffGuidePage })));
 const HolidaysPage = lazy(() => import('./pages/HolidaysPage').then((module) => ({ default: module.HolidaysPage })));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage').then((module) => ({ default: module.HowItWorksPage })));
 const ContactsPage = lazy(() => import('./pages/ContactsPage').then((module) => ({ default: module.ContactsPage })));
@@ -90,6 +91,14 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="manager/guide"
+              element={
+                <RequireAuth role="staff">
+                  <StaffGuidePage />
+                </RequireAuth>
+              }
+            />
 
             <Route
               path="admin"
@@ -106,6 +115,7 @@ export default function App() {
               <Route path="themes" element={<AdminThemesPage />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
+              <Route path="guide" element={<StaffGuidePage embedded />} />
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />

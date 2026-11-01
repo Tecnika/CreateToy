@@ -1,4 +1,5 @@
-import { ClipboardList, Mail } from 'lucide-react';
+import { BookOpen, ClipboardList, Mail } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { OrdersManager } from '../components/admin/OrdersManager';
 import { ManagerNav } from '../components/manager/ManagerNav';
 import { PageHero } from '../components/ui/PageHero';
@@ -26,6 +27,9 @@ export function ManagerPage() {
             <a href={`mailto:${settings.contactEmail}`} className="btn-secondary w-full text-xs">
               <Mail size={15} /> Почта магазина
             </a>
+            <Link to="/manager/guide" className="btn-secondary w-full text-xs">
+              <BookOpen size={15} /> Инструкция
+            </Link>
           </div>
         }
       />

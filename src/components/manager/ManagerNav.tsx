@@ -1,9 +1,10 @@
-import { Boxes, ClipboardList } from 'lucide-react';
+import { BookOpen, Boxes, ClipboardList } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const items = [
   { to: '/manager', label: 'Заказы', icon: ClipboardList, end: true },
   { to: '/manager/products', label: 'Товары', icon: Boxes },
+  { to: '/manager/guide', label: 'Инструкция', icon: BookOpen },
 ];
 
 export function ManagerNav() {
