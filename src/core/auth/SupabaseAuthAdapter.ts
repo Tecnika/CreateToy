@@ -16,6 +16,8 @@ import {
 const ADMIN_LOGIN = ((import.meta.env.VITE_ADMIN_LOGIN as string | undefined) || 'Administrator').trim().toLowerCase();
 const ADMIN_EMAIL = ((import.meta.env.VITE_ADMIN_EMAIL as string | undefined) || 'admin@createtoy.local').trim();
 
+class StaleSessionError extends Error {}
+
 function resolveLogin(login: string): string {
   const normalized = login.trim();
   return normalized.toLowerCase() === ADMIN_LOGIN ? ADMIN_EMAIL : normalized;
@@ -138,11 +140,20 @@ export class SupabaseAuthAdapter implements AuthAdapter {
     if (error) throw mapAuthError(error);
 
     if (data.session?.user) {
-      const profile = await this.ensureProfile(data.session.user);
-      this.current = profile;
-      this.cache.upsertUser(profile);
-      this.emit(profile);
-      await this.reloadPrivateData();
+      try {
+        const profile = await this.ensureProfile(data.session.user);
+        this.current = profile;
+        this.cache.upsertUser(profile);
+        this.emit(profile);
+        await this.reloadPrivateData();
+      } catch (error) {
+        if (!(error instanceof StaleSessionError)) throw error;
+        console.warn('Supabase session belongs to a deleted account; signing out.');
+        await this.client.auth.signOut();
+        this.current = null;
+        this.cache.clearSession();
+        this.emit(null);
+      }
     }
 
     this.client.auth.onAuthStateChange((event) => {
@@ -193,6 +204,9 @@ export class SupabaseAuthAdapter implements AuthAdapter {
       .single();
 
     if (insertError) {
+      if ((insertError as { code?: string }).code === '23503') {
+        throw new StaleSessionError('Аккаунт больше не существует.');
+      }
       const retry = await this.client.from('profiles').select('*').eq('id', user.id).maybeSingle();
       if (retry.data) return mapProfileRow(retry.data as ProfileRow);
       throw supabaseError(insertError, 'Не удалось создать профиль.');
