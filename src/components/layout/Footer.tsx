@@ -9,7 +9,7 @@ export function Footer() {
   const { isDemo } = useAuth();
 
   return (
-    <footer className="mt-24 border-t border-line bg-surface/60">
+    <footer className="relative z-10 mt-24 border-t border-line bg-surface/60">
       <div className="container-page grid gap-10 py-14 lg:grid-cols-[1.4fr_1fr_1fr_1.1fr]">
         <div>
           <Logo />
