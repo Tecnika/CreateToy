@@ -204,8 +204,8 @@ export class SupabaseAuthAdapter implements AuthAdapter {
       .single();
 
     if (insertError) {
-      if ((insertError as { code?: string }).code === '23503') {
-        throw new StaleSessionError('Аккаунт больше не существует.');
+      if (['23503', '42501'].includes((insertError as { code?: string }).code ?? '')) {
+        throw new StaleSessionError('Аккаунт больше не существует или недоступен.');
       }
       const retry = await this.client.from('profiles').select('*').eq('id', user.id).maybeSingle();
       if (retry.data) return mapProfileRow(retry.data as ProfileRow);
