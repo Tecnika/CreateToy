@@ -31,6 +31,18 @@ function isTimeout(error: unknown): boolean {
   return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
 }
 
+function requestUrl(input: FetchInput): string {
+  if (typeof input === 'string') return input;
+  if (input instanceof URL) return input.href;
+  return input.url;
+}
+
+function shouldRetry(method: string, input: FetchInput): boolean {
+  if (method === 'GET') return true;
+  if (method !== 'POST') return false;
+  return /\/auth\/v1\/token(\?|$)/.test(requestUrl(input));
+}
+
 async function requestWithTimeout(input: FetchInput, init?: RequestInit): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => {
@@ -73,7 +85,7 @@ async function fetchWithTimeout(input: FetchInput, init?: RequestInit): Promise<
   try {
     return await requestWithTimeout(input, init);
   } catch (error) {
-    if (method !== 'GET' || init?.signal?.aborted || !isTimeout(error)) {
+    if (init?.signal?.aborted || !isTimeout(error) || !shouldRetry(method, input)) {
       throw isTimeout(error) ? new Error(TIMEOUT_MESSAGE) : error;
     }
     try {
