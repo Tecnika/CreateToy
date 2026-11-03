@@ -1,0 +1,1 @@
+import{t as e}from"./ProductManager-CUZYUcCp.js";import{n as t}from"./createLucideIcon-C-bNdaTa.js";var n=t();function r(){return(0,n.jsx)(e,{canDelete:!0,canArchive:!0,canRestore:!0,showTemplateLink:!0})}export{r as AdminProductsPage};

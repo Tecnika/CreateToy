@@ -1,0 +1,1 @@
+function e(e){return new Intl.DateTimeFormat(`ru-RU`,{day:`numeric`,month:`long`,year:`numeric`}).format(new Date(e))}function t(e){return new Intl.DateTimeFormat(`ru-RU`,{day:`numeric`,month:`short`,hour:`2-digit`,minute:`2-digit`}).format(new Date(e))}function n(e,t,n,r){let i=e%10,a=e%100;return i===1&&a!==11?t:i>=2&&i<=4&&(a<12||a>14)?n:r}export{t as n,n as r,e as t};

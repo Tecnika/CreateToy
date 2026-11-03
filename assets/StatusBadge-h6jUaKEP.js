@@ -1,0 +1,1 @@
+import{t as e}from"./clsx-DB0hHKMi.js";import{a as t,s as n}from"./container-DiSx1Fcx.js";import{n as r}from"./createLucideIcon-C-bNdaTa.js";var i=r();function a({status:r,className:a}){return(0,i.jsx)(`span`,{className:e(`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em]`,n[r],a),children:t[r]})}export{a as t};
