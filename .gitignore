@@ -13,13 +13,6 @@ dist-ssr/
 coverage/
 *.local
 
-# Firebase
-.firebase/
-firebase-debug.log
-firestore-debug.log
-ui-debug.log
-.firebaserc.local
-
 # Editors / OS
 .vscode/*
 !.vscode/extensions.json

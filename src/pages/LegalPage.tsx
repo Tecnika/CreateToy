@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText } from 'lucide-react';
+import { useAuth } from '../state/AuthContext';
 import { useSettings } from '../state/SettingsContext';
 import { PageHero } from '../components/ui/PageHero';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -12,7 +13,7 @@ interface LegalDocument {
   sections: { title: string; text: string }[];
 }
 
-function documents(contactEmail: string): Record<string, LegalDocument> {
+function documents(contactEmail: string, isDemo: boolean): Record<string, LegalDocument> {
   return {
     privacy: {
       title: 'Политика',
@@ -25,7 +26,9 @@ function documents(contactEmail: string): Record<string, LegalDocument> {
         },
         {
           title: 'Где хранятся данные',
-          text: 'В демо-режиме данные сохраняются только в вашем браузере. После подключения Firebase они будут храниться в защищённом проекте Firebase и использоваться только для работы магазина.',
+          text: isDemo
+            ? 'В демо-режиме данные сохраняются только в вашем браузере и не отправляются на сервер.'
+            : 'Данные хранятся в защищённом облачном проекте Supabase и используются только для работы магазина.',
         },
         {
           title: 'Передача третьим лицам',
@@ -89,7 +92,8 @@ function documents(contactEmail: string): Record<string, LegalDocument> {
 export function LegalPage() {
   const { doc } = useParams();
   const { settings } = useSettings();
-  const all = documents(settings.contactEmail);
+  const { isDemo } = useAuth();
+  const all = documents(settings.contactEmail, isDemo);
   const document = doc ? all[doc] : undefined;
 
   if (!document) {

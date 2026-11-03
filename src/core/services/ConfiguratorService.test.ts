@@ -33,15 +33,17 @@ describe('ConfiguratorService', () => {
     expect(service.getById('legacy')?.fields.map((field) => field.id)).toEqual(['text']);
   });
 
-  it('does not save upload fields in new templates', () => {
+  it('does not save upload fields in new templates', async () => {
     const saved: ConfiguratorTemplateData[] = [];
     const service = new ConfiguratorService({
       listCustom: () => [],
-      saveCustom: (template) => saved.push(template),
+      saveCustom: (template) => {
+        saved.push(template);
+      },
       removeCustom: () => undefined,
     });
 
-    service.save({
+    await service.save({
       id: 'new',
       name: 'Новый шаблон',
       description: '',

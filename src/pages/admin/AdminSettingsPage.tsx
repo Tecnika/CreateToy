@@ -9,19 +9,31 @@ export function AdminSettingsPage() {
   const [delivery, setDelivery] = useState(settings.deliveryMethods.join('\n'));
   const [payment, setPayment] = useState(settings.paymentMethods.join('\n'));
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   function update<K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    saveSettings({
-      ...draft,
-      deliveryMethods: delivery.split('\n').map((item) => item.trim()).filter(Boolean),
-      paymentMethods: payment.split('\n').map((item) => item.trim()).filter(Boolean),
-    });
-    setMessage('Настройки сохранены.');
+    if (busy) return;
+    setMessage('');
+    setError('');
+    setBusy(true);
+    try {
+      await saveSettings({
+        ...draft,
+        deliveryMethods: delivery.split('\n').map((item) => item.trim()).filter(Boolean),
+        paymentMethods: payment.split('\n').map((item) => item.trim()).filter(Boolean),
+      });
+      setMessage('Настройки сохранены.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось сохранить настройки.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -32,7 +44,11 @@ export function AdminSettingsPage() {
         <p className="mt-2 text-sm text-muted">Эти данные используются в шапке, подвале, оформлении заказа и письмах.</p>
       </div>
 
-      {message && <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700">{message}</p>}
+      {(message || error) && (
+        <p className={`rounded-2xl px-4 py-3 text-xs font-semibold ${error ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>
+          {error || message}
+        </p>
+      )}
 
       <form onSubmit={submit} className="space-y-5">
         <section className="surface-card p-5 sm:p-6">
@@ -104,7 +120,7 @@ export function AdminSettingsPage() {
         </section>
 
         <div className="flex justify-end">
-          <button type="submit" className="btn-primary px-5 py-3 text-xs"><Check size={15} /> Сохранить настройки</button>
+          <button type="submit" className="btn-primary px-5 py-3 text-xs" disabled={busy}><Check size={15} /> {busy ? 'Сохраняем...' : 'Сохранить настройки'}</button>
         </div>
       </form>
     </div>

@@ -1,9 +1,18 @@
-import type { AuthAdapter, ProfilePatch, RegisterInput } from '../auth/AuthAdapter';
+import type {
+  AuthAdapter,
+  ProfilePatch,
+  RegisterInput,
+  SocialProvider,
+} from '../auth/AuthAdapter';
 import { RoleGuard } from '../domain/Role';
 import type { Role, UserProfile } from '../domain/types';
 
 export class AuthService {
   constructor(private readonly adapter: AuthAdapter) {}
+
+  get isDemo(): boolean {
+    return this.adapter.isDemo;
+  }
 
   get currentUser(): UserProfile | null {
     return this.adapter.getCurrentUser();
@@ -21,6 +30,10 @@ export class AuthService {
     return this.currentUser?.role === 'admin';
   }
 
+  initialize(): Promise<void> {
+    return this.adapter.initialize();
+  }
+
   signIn(login: string, password: string): Promise<UserProfile> {
     return this.adapter.signIn(login, password);
   }
@@ -31,6 +44,13 @@ export class AuthService {
 
   signInDemo(role: Role): Promise<UserProfile> {
     return this.adapter.signInDemo(role);
+  }
+
+  async signInWithProvider(provider: SocialProvider): Promise<void> {
+    if (!this.adapter.signInWithProvider) {
+      throw new Error('Социальный вход пока не настроен.');
+    }
+    await this.adapter.signInWithProvider(provider);
   }
 
   updateProfile(patch: ProfilePatch): Promise<UserProfile> {

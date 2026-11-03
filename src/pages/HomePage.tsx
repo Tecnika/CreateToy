@@ -51,13 +51,13 @@ export function HomePage() {
             style={{ background: 'radial-gradient(circle, var(--accent-2) 0%, transparent 70%)' }}
           />
 
-          <div className="relative grid items-center gap-10 lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="relative grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10">
             <div>
               <span className="eyebrow mb-5">
                 <Sparkles size={13} className="text-accent" />
                 {theme.data.tagline} · {theme.data.dateLabel}
               </span>
-              <h1 className="display-title max-w-2xl text-4xl leading-[1.02] sm:text-6xl lg:text-[4.6rem]">
+              <h1 className="display-title max-w-2xl text-4xl leading-[1.02] sm:text-5xl xl:text-6xl">
                 {theme.data.heroTitle} <span className="text-accent">{theme.data.heroAccent}</span>
               </h1>
               <p className="mt-5 max-w-xl text-sm leading-7 text-muted sm:text-base">{theme.data.heroNote}</p>
@@ -89,7 +89,7 @@ export function HomePage() {
             </div>
 
             {heroProduct && (
-              <div className="relative mx-auto w-full max-w-md">
+              <div className="relative mx-auto w-full max-w-md xl:max-w-lg">
                 <div className="absolute -inset-4 rounded-[2.5rem] bg-gradient-to-br from-accent/20 via-transparent to-accent-2/20 blur-2xl" />
                 <div className="relative overflow-hidden rounded-[2.25rem] border border-line bg-surface shadow-lift">
                   <div
@@ -105,11 +105,11 @@ export function HomePage() {
                   </div>
                   <div className="p-5">
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <h2 className="display-title text-2xl">{heroProduct.title}</h2>
                         <p className="mt-1 text-sm text-muted">{heroProduct.subtitle}</p>
                       </div>
-                      <p className="font-display text-xl font-semibold">{Money.from(heroProduct.price).format()}</p>
+                      <p className="shrink-0 font-display text-xl font-semibold">{Money.from(heroProduct.price).format()}</p>
                     </div>
                     <Link
                       to={`/product/${heroProduct.slug}`}
@@ -156,8 +156,8 @@ export function HomePage() {
             </LinkButton>
           }
         />
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.slice(0, 6).map((product) => (
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {featured.slice(0, 8).map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

@@ -26,6 +26,73 @@ html {
   scroll-behavior: smooth;
 }
 
+.app-boot {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.app-boot__card {
+  width: min(100%, 420px);
+  border: 1px solid var(--line);
+  border-radius: 32px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: 0 24px 60px -36px color-mix(in srgb, var(--ink) 35%, transparent);
+  padding: 32px;
+  text-align: center;
+}
+
+.app-boot__spinner {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  border: 3px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  border-radius: 999px;
+  animation: app-boot-spin 0.8s linear infinite;
+}
+
+.app-boot__title {
+  margin: 16px 0 0;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.app-boot__text {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.app-boot__card--error .app-boot__title {
+  color: var(--accent);
+}
+
+.app-boot__button {
+  margin-top: 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--surface);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 12px 24px;
+}
+
+.app-boot__button:hover {
+  filter: brightness(1.08);
+}
+
+@keyframes app-boot-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -79,7 +146,7 @@ svg {
 
 @layer components {
   .container-page {
-    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 2xl:px-10;
   }
 
   .display-title {

@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Mail, MapPin, Phone, Send } from 'lucide-react';
+import { useAuth } from '../../state/AuthContext';
 import { useSettings } from '../../state/SettingsContext';
 import { Logo } from '../ui/Logo';
 
 export function Footer() {
   const { settings } = useSettings();
+  const { isDemo } = useAuth();
 
   return (
     <footer className="mt-24 border-t border-line bg-surface/60">
@@ -13,7 +15,7 @@ export function Footer() {
           <Logo />
           <p className="mt-4 max-w-xs text-sm leading-6 text-muted">{settings.tagline}</p>
           <p className="mt-5 inline-flex rounded-full bg-accent-soft px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-accent-2">
-            Демо-режим · данные в браузере
+            {isDemo ? 'Демо-режим · данные в браузере' : 'Облачный аккаунт · Supabase'}
           </p>
         </div>
 

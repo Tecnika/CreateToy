@@ -8,7 +8,7 @@ export class SettingsService {
     return this.repository.get();
   }
 
-  save(settings: SiteSettings): void {
-    this.repository.save(settings);
+  async save(settings: SiteSettings): Promise<void> {
+    await this.repository.save(settings);
   }
 }

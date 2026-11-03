@@ -43,6 +43,7 @@ export function OrdersManager() {
   const [shipping, setShipping] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const orders = useMemo(() => services.orders.listAll(), [version]);
   const stats = useMemo(() => services.orders.stats(), [version]);
@@ -77,53 +78,65 @@ export function OrdersManager() {
     setVersion((value) => value + 1);
   }
 
-  function changeStatus() {
-    if (!selected || !user) return;
+  async function changeStatus() {
+    if (!selected || !user || busy) return;
     setError('');
     setMessage('');
+    setBusy(true);
     try {
-      services.orders.updateStatus(selected.data.id, nextStatus, user.uid, statusNote.trim() || undefined);
+      await services.orders.updateStatus(selected.data.id, nextStatus, user.uid, statusNote.trim() || undefined);
       setMessage(`Статус изменён на «${ORDER_STATUS_LABELS[nextStatus]}».`);
       setStatusNote('');
       refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Не удалось изменить статус.');
+    } finally {
+      setBusy(false);
     }
   }
 
-  function confirmPayment() {
-    if (!selected || !user) return;
+  async function confirmPayment() {
+    if (!selected || !user || busy) return;
     setError('');
+    setBusy(true);
     try {
-      services.orders.updateStatus(selected.data.id, 'paid', user.uid, 'Оплата подтверждена менеджером');
+      await services.orders.updateStatus(selected.data.id, 'paid', user.uid, 'Оплата подтверждена менеджером');
       setMessage('Оплата подтверждена.');
       refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Не удалось подтвердить оплату.');
+    } finally {
+      setBusy(false);
     }
   }
 
-  function saveTracking() {
-    if (!selected) return;
+  async function saveTracking() {
+    if (!selected || busy) return;
     setError('');
+    setBusy(true);
     try {
-      services.orders.updateTracking(selected.data.id, tracking);
+      await services.orders.updateTracking(selected.data.id, tracking);
       setMessage('Трек-номер сохранён.');
       refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Не удалось сохранить трек-номер.');
+    } finally {
+      setBusy(false);
     }
   }
 
-  function saveShipping() {
-    if (!selected) return;
+  async function saveShipping() {
+    if (!selected || busy) return;
     setError('');
+    setBusy(true);
     try {
-      services.orders.updateShippingCost(selected.data.id, Number(shipping) || 0);
+      await services.orders.updateShippingCost(selected.data.id, Number(shipping) || 0);
       setMessage('Стоимость доставки обновлена.');
       refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Не удалось сохранить доставку.');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -148,7 +161,8 @@ export function OrdersManager() {
         ))}
       </div>
 
-      <div className="surface-card p-4 sm:p-5">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] xl:items-start">
+        <div className="surface-card p-4 sm:p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
             {FILTERS.map((item) => (
@@ -213,7 +227,8 @@ export function OrdersManager() {
         </div>
       </div>
 
-      {selected && (
+      <div id="order-detail" className="xl:sticky xl:top-28">
+        {selected ? (
         <div className="surface-card overflow-hidden">
           <div className="flex items-start justify-between gap-4 border-b border-line bg-surface-2/50 p-5">
             <div>
@@ -297,7 +312,7 @@ export function OrdersManager() {
                       <option key={status} value={status}>{ORDER_STATUS_LABELS[status]}</option>
                     ))}
                   </select>
-                  <button type="button" onClick={changeStatus} className="btn-primary shrink-0 px-3 py-2 text-xs">
+                  <button type="button" onClick={changeStatus} className="btn-primary shrink-0 px-3 py-2 text-xs" disabled={busy}>
                     Применить
                   </button>
                 </div>
@@ -308,7 +323,7 @@ export function OrdersManager() {
                   placeholder="Комментарий к статусу (необязательно)"
                 />
                 {selected.data.status === 'awaiting_payment' && (
-                  <button type="button" onClick={confirmPayment} className="btn-secondary mt-2 w-full py-2.5 text-xs">
+                  <button type="button" onClick={confirmPayment} className="btn-secondary mt-2 w-full py-2.5 text-xs" disabled={busy}>
                     <CheckCircle2 size={15} /> Подтвердить оплату
                   </button>
                 )}
@@ -324,7 +339,7 @@ export function OrdersManager() {
                     placeholder="Стоимость, ₽"
                     inputMode="numeric"
                   />
-                  <button type="button" onClick={saveShipping} className="btn-secondary shrink-0 px-3 py-2 text-xs">Сохранить</button>
+                  <button type="button" onClick={saveShipping} className="btn-secondary shrink-0 px-3 py-2 text-xs" disabled={busy}>Сохранить</button>
                 </div>
                 <div className="mt-2 flex gap-2">
                   <input
@@ -333,7 +348,7 @@ export function OrdersManager() {
                     onChange={(event) => setTracking(event.target.value)}
                     placeholder="Трек-номер"
                   />
-                  <button type="button" onClick={saveTracking} className="btn-secondary shrink-0 px-3 py-2 text-xs">OK</button>
+                  <button type="button" onClick={saveTracking} className="btn-secondary shrink-0 px-3 py-2 text-xs" disabled={busy}>OK</button>
                 </div>
               </div>
 
@@ -348,7 +363,19 @@ export function OrdersManager() {
             </div>
           </div>
         </div>
-      )}
+        ) : (
+          <div className="surface-card hidden p-8 text-center xl:block">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft text-accent">
+              <Package size={20} />
+            </span>
+            <p className="mt-4 font-display text-lg font-semibold">Выберите заказ</p>
+            <p className="mt-1 text-xs leading-5 text-muted">
+              Нажмите на строку в списке — справа появятся состав, статус, доставка и контакты покупателя.
+            </p>
+          </div>
+        )}
+      </div>
+      </div>
     </div>
   );
 }

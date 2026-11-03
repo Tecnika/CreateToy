@@ -28,7 +28,7 @@ export class OrderService {
     return this.repository.getById(id);
   }
 
-  createOrder(user: UserProfile, lines: CartLineData[], details: CheckoutDetails): Order {
+  async createOrder(user: UserProfile, lines: CartLineData[], details: CheckoutDetails): Promise<Order> {
     if (lines.length === 0) {
       throw new Error('Корзина пуста.');
     }
@@ -38,39 +38,37 @@ export class OrderService {
       ...details,
       lines,
     });
-    this.repository.save(order);
-    return order;
+    return await this.repository.create(order);
   }
 
-  updateStatus(id: string, status: OrderStatus, by: string, note?: string): Order {
+  async updateStatus(id: string, status: OrderStatus, by: string, note?: string): Promise<Order> {
     const order = this.getOrderOrThrow(id);
     const updated = order.withStatus(status, by, note);
-    this.repository.save(updated);
-    return updated;
+    return await this.repository.update(updated);
   }
 
-  updateTracking(id: string, trackingNumber: string): Order {
+  async updateTracking(id: string, trackingNumber: string): Promise<Order> {
     const order = this.getOrderOrThrow(id);
     const updated = order.withTracking(trackingNumber);
-    this.repository.save(updated);
-    return updated;
+    return await this.repository.update(updated);
   }
 
-  updateShippingCost(id: string, amount: number): Order {
+  async updateShippingCost(id: string, amount: number): Promise<Order> {
     const order = this.getOrderOrThrow(id);
     const updated = order.withShippingCost(amount);
-    this.repository.save(updated);
-    return updated;
+    return await this.repository.update(updated);
   }
 
-  cancelByBuyer(id: string, userId: string): Order {
+  async cancelByBuyer(id: string, userId: string): Promise<Order> {
     const order = this.getOrderOrThrow(id);
     if (order.data.userId !== userId) {
       throw new Error('Это не ваш заказ.');
     }
     const updated = order.cancelByBuyer(userId);
-    this.repository.save(updated);
-    return updated;
+    if (this.repository.cancel) {
+      return await this.repository.cancel(updated.data.id);
+    }
+    return await this.repository.update(updated);
   }
 
   stats() {

@@ -1,229 +1,104 @@
-# CreateToy — настройка на Windows
+# Настройка Windows
 
-## 1. Что уже готово
+Краткая инструкция для локальной разработки CreateToy на Windows 10/11. Общая архитектура и режимы данных описаны в [README](../README.md), Supabase — в [SUPABASE-SETUP.md](SUPABASE-SETUP.md).
 
-- Репозиторий: `https://github.com/Tecnika/CreateToy.git`
-- Локальная папка: `D:\GitHub\Sites\CreateToy`
-- Git инициализирован, remote `origin` настроен.
-- GitHub-токен проверен: есть доступ к репозиторию, права push/admin, Actions и Secrets.
-- Репозиторий публичный, ветка `main` запушена.
-- GitHub Pages включён: сайт собирается workflow и публикуется из ветки `gh-pages`.
-- Демо-версия доступна: `https://tecnika.github.io/CreateToy/`.
-- Firebase-проект ещё не создан.
-- Секреты лежат в `.secrets/credentials.env`; папка `.secrets/` добавлена в `.gitignore`.
+## 1. Что установить
 
-## 2. Установка инструментов
+- **Node.js 24.12+** — <https://nodejs.org/> или `winget install OpenJS.NodeJS.LTS`.
+- **Git** — <https://git-scm.com/download/win>.
+- **VS Code** (по желанию) с расширениями ESLint и Tailwind CSS IntelliSense.
 
-### Node.js
-
-Скачайте LTS-версию с `https://nodejs.org/` или установите через PowerShell:
+Проверка в PowerShell:
 
 ```powershell
-winget install OpenJS.NodeJS.LTS
-```
-
-Проверка в новом окне PowerShell:
-
-```powershell
-node -v
-npm -v
-```
-
-Нужен Node.js 24.12 или новее: этого требует Firebase SDK. Именно эта версия используется в GitHub Actions.
-
-### Git
-
-```powershell
-winget install Git.Git
+node --version
+npm --version
 git --version
 ```
 
-Git уже установлен и настроен в этой папке.
-
-### Firebase CLI
+## 2. Клонирование и зависимости
 
 ```powershell
-npm install -g firebase-tools
-firebase --version
+cd D:\GitHub\Sites
+git clone https://github.com/Tecnika/CreateToy.git
+cd CreateToy
+npm install
 ```
 
-Если PowerShell пишет `firebase не является внутренней или внешней командой`, добавьте в `PATH` папку:
+## 3. Переменные окружения
 
-```text
-%APPDATA%\npm
+Публичная конфигурация лежит в `.env.local` (файл исключён из git):
+
+```dotenv
+VITE_DATA_MODE=supabase
+VITE_SUPABASE_URL=https://ztfjefnnkjnsuefplxpg.supabase.co
+VITE_SUPABASE_ANON_KEY=ваш_anon_или_publishable_key
+VITE_ADMIN_LOGIN=Administrator
+VITE_ADMIN_EMAIL=admin@createtoy.local
 ```
 
-После изменения `PATH` перезапустите PowerShell.
+Если `VITE_DATA_MODE` не равен `supabase` или URL/ключ не заданы, приложение работает в демо-режиме на `localStorage`.
 
-### Java — позже
+Секреты (`service_role`, строка подключения PostgreSQL, пароли сотрудников) хранятся только в `.secrets/supabase.env`. Этот файл нельзя коммитить и нельзя переносить в `VITE_*`: такие переменные попадают в браузер.
 
-Java нужна только для Firebase Emulator Suite. Для первого этапа не обязательна. Если понадобится:
+Шаблон публичных переменных: [`.env.example`](../.env.example).
+
+## 4. Запуск
 
 ```powershell
-winget install Microsoft.OpenJDK.21
+npm run dev
 ```
 
-## 3. Создание Firebase-проекта на бесплатном плане Spark
+Сайт откроется на <http://127.0.0.1:5173/>. Vite сам перезагружает страницу после изменений.
 
-Карта на этом этапе не нужна.
-
-1. Откройте `https://console.firebase.google.com/`.
-2. Создайте проект, например `CreateToy`.
-3. Google Analytics можно отключить — для MVP не обязательна.
-4. Создайте Firestore:
-   - режим: production;
-   - регион: `europe-west3` (Frankfurt).
-   - Регион нельзя изменить после создания.
-5. В Authentication включите:
-   - Email/Password;
-   - Google.
-6. Storage на Spark не создаём: для новых проектов Cloud Storage требует Blaze. В текущем MVP загрузки покупателей не используются, а карточки товаров показывают встроенную графику, поэтому Storage не нужен.
-7. В Project settings → General → Your apps создайте Web app.
-8. Скопируйте Firebase web config. Это публичные значения, не секрет.
-9. В Project settings → Service accounts нажмите Generate new private key.
-10. Сохраните JSON как:
-
-```text
-D:\GitHub\Sites\CreateToy\.secrets\firebase-service-account.json
-```
-
-Этот файл — секрет. Он уже покрыт `.gitignore` и не должен попадать в GitHub.
-
-11. В Authentication → Settings → Authorized domains добавьте:
-   - `localhost`;
-   - `tecnika.github.io`;
-   - будущий `*.web.app`;
-   - будущий `*.firebaseapp.com`.
-
-## 4. Заполнение `.secrets/credentials.env`
-
-Откройте файл:
-
-```text
-D:\GitHub\Sites\CreateToy\.secrets\credentials.env
-```
-
-Заполните:
-
-```env
-FIREBASE_PROJECT_ID=ваш-project-id
-ADMIN_EMAIL=ваш-email-для-админа
-FIREBASE_SERVICE_ACCOUNT_PATH=.secrets/firebase-service-account.json
-```
-
-`FIREBASE_TOKEN` пока можно оставить пустым. Он нужен для деплоя из GitHub Actions. Для локального деплоя достаточно `firebase login`.
-
-Проверьте, что секреты не попали в git:
+Полезные команды:
 
 ```powershell
-git check-ignore -v .secrets/credentials.env
-git status --short
+npm run typecheck   # проверка TypeScript
+npm test            # unit-тесты
+npm run build       # production-сборка в dist/
+npm run preview     # локальный просмотр dist/
 ```
 
-В `git status` не должно быть `.secrets/`.
+## 5. Аккаунты
 
-## 5. Вход в Firebase CLI
+- Администратор: `Administrator` → `admin@createtoy.local`.
+- Менеджер: `manager@createtoy.local`.
+- Пароли: только в `.secrets/supabase.env`.
+- Демо-режим: `demo1234` для `buyer@createtoy.local`, `manager@createtoy.local` и `admin@createtoy.local`.
 
-Для локальной работы:
+## 6. Публикация
+
+GitHub Actions собирает сайт и публикует `dist/` на GitHub Pages:
+
+- workflow: `.github/workflows/deploy-pages.yml`;
+- адрес: <https://tecnika.github.io/CreateToy/>;
+- для SPA используется `404.html` с перенаправлением на `index.html`.
+
+Публичные `VITE_*` уже прописаны в workflow. Секреты в CI не добавляются.
+
+## 7. Частые проблемы
+
+**PowerShell не запускает `npm`**
 
 ```powershell
-firebase login
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ```
 
-Для CI-токена:
+**Порт 5173 занят**
 
 ```powershell
-firebase login:ci
+npm run dev -- --port 5174
 ```
 
-Токен `login:ci` даёт доступ ко всем Firebase-проектам аккаунта. Если это критично, используйте service account JSON вместо CI-токена.
+**Сайт долго грузится**
 
-Привязка проекта:
+Бесплатный проект Supabase засыпает после 7 дней без запросов. Первый запрос может занять несколько секунд; клиент автоматически показывает ошибку, если сервер не ответил за 15 секунд.
 
-```powershell
-firebase use --add
-```
+**После регистрации не пускает в аккаунт**
 
-Выберите проект и alias `default`.
+В Supabase включено подтверждение email. Отключите **Authentication → Providers → Email → Confirm email** или подтвердите письмо.
 
-Проверка:
+**Кнопки Google/GitHub возвращают ошибку**
 
-```powershell
-firebase projects:list
-```
-
-## 6. Что такое Blaze
-
-В Firebase два основных плана:
-
-- **Spark** — бесплатный. Доступны Auth, Firestore, Hosting. Cloud Storage для новых проектов недоступен — нужен Blaze.
-- **Blaze** — pay-as-you-go. Нужна привязанная карта. Внутри Blaze есть бесплатные лимиты, платите только за превышение.
-
-**Cloud Functions требуют Blaze.** Functions нужны для:
-
-- автоматических писем;
-- управления ролями через custom claims;
-- некоторых серверных проверок.
-
-Без Blaze можно сделать MVP:
-
-- регистрация и вход;
-- каталог, корзина, заказы;
-- роли через Firestore + security rules;
-- админ-панель;
-- ручное подтверждение оплаты;
-- GitHub Pages + Firebase Hosting.
-
-Ограничения без Blaze:
-
-- Cloud Storage недоступен для новых проектов;
-- нет автоматических писем (только in-app и `mailto:`);
-- роль администратора создаётся локальным скриптом с service account;
-- custom claims не используются, роли хранятся в Firestore;
-- сложные серверные проверки откладываются.
-
-Blaze можно добавить позже без переделки фронтенда.
-
-## 7. GitHub Pages
-
-Репозиторий: `https://github.com/Tecnika/CreateToy`
-
-Адрес GitHub Pages:
-
-```text
-https://tecnika.github.io/CreateToy/
-```
-
-Как это устроено:
-
-1. Push в `main` запускает `.github/workflows/deploy-pages.yml`.
-2. Workflow ставит зависимости, запускает тесты и собирает проект с базовым путём `/CreateToy/`.
-3. Содержимое `dist/` вместе с `404.html` и `.nojekyll` публикуется в ветку `gh-pages`.
-4. GitHub Pages собирает сайт из `gh-pages` (Source: **Deploy from a branch**, branch `gh-pages`, folder `/`).
-
-Первый деплой уже выполнен. Прямые ссылки вроде `/CreateToy/catalog` работают через `404.html`.
-
-Firebase Hosting будет основным адресом, GitHub Pages — зеркалом.
-
-## 8. Безопасность
-
-- `.secrets/` уже в `.gitignore`.
-- GitHub-токен был отправлен в чат. После завершения настройки его лучше перевыпустить.
-- Пароль администратора был в переписке. При первом входе система потребует его сменить.
-- Не храните токены в переменных `VITE_*`: они попадут в браузер.
-- Service account JSON нельзя коммитить, публиковать и отправлять в чат.
-- Firebase web config не является секретом.
-
-## 9. Следующий шаг
-
-Фронтенд, демо-данные, роли, конфигуратор, темы и GitHub Pages уже готовы. После создания Firebase-проекта и заполнения `FIREBASE_PROJECT_ID`:
-
-1. Подключить Firebase Auth, Firestore и Hosting. Storage пропустить: на Spark он недоступен.
-2. Заменить localStorage-репозитории на Firebase-адаптеры в `src/core/container.ts`.
-3. Настроить security rules, индексы и создание администратора `Administrator`.
-4. Проверить роли и заказы на реальных данных.
-5. Задеплоить Firebase Hosting и оставить GitHub Pages зеркалом.
-
-До подключения Firebase проект полностью работает в демо-режиме без внешних сервисов.
-
-Пошаговая инструкция именно для Spark: [`FIREBASE-SPARK.md`](FIREBASE-SPARK.md).
+Провайдеры не настроены. Инструкция — в [SUPABASE-SETUP.md](SUPABASE-SETUP.md).

@@ -6,9 +6,9 @@ import type { HolidayThemeData } from '../core/domain/types';
 interface ThemeContextValue {
   theme: HolidayTheme;
   themes: HolidayTheme[];
-  setActiveTheme: (id: string) => void;
-  addCustomTheme: (data: HolidayThemeData) => void;
-  removeCustomTheme: (id: string) => void;
+  setActiveTheme: (id: string) => Promise<void>;
+  addCustomTheme: (data: HolidayThemeData) => Promise<void>;
+  removeCustomTheme: (id: string) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);

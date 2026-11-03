@@ -25,15 +25,15 @@ export class ConfiguratorService {
     return this.list().find((template) => template.id === id);
   }
 
-  save(data: ConfiguratorTemplateData): ConfiguratorTemplate {
+  async save(data: ConfiguratorTemplateData): Promise<ConfiguratorTemplate> {
     const stored: ConfiguratorTemplateData = { ...withoutLegacyUploads(data), isCustom: true };
     const template = new ConfiguratorTemplate(stored);
-    this.repository.saveCustom(stored);
+    await this.repository.saveCustom(stored);
     return template;
   }
 
-  removeCustom(id: string): void {
-    this.repository.removeCustom(id);
+  async removeCustom(id: string): Promise<void> {
+    await this.repository.removeCustom(id);
   }
 
   isBuiltIn(id: string): boolean {

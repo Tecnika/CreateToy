@@ -104,23 +104,35 @@ export function CheckoutPage() {
         postalCode: addressDraft.postalCode.trim(),
         isDefault: user.addresses.length === 0,
       };
-      if (saveAddress) {
-        await updateProfile({ addresses: [...user.addresses, address] });
-      }
     }
 
-    const order = services.orders.createOrder(user, lines, {
-      customerName: customerName.trim(),
-      customerEmail: customerEmail.trim(),
-      customerPhone: customerPhone.trim(),
-      address,
-      comment: comment.trim(),
-      deliveryMethod,
-      paymentMethod,
-    });
+    try {
+      const order = await services.orders.createOrder(user, lines, {
+        customerName: customerName.trim(),
+        customerEmail: customerEmail.trim(),
+        customerPhone: customerPhone.trim(),
+        address,
+        comment: comment.trim(),
+        deliveryMethod,
+        paymentMethod,
+      });
 
-    clear();
-    navigate(`/account/orders/${order.data.id}`, { state: { justCreated: true } });
+      if (!selectedAddress && saveAddress) {
+        try {
+          await updateProfile({ addresses: [...user.addresses, address] });
+        } catch (caught) {
+          console.warn('Не удалось сохранить адрес в профиле:', caught);
+        }
+      }
+
+      clear();
+      navigate(`/account/orders/${order.data.id}`, { state: { justCreated: true } });
+    } catch (caught) {
+      setErrors([caught instanceof Error ? caught.message : 'Не удалось создать заказ. Попробуйте ещё раз.']);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (!user) return null;

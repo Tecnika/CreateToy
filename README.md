@@ -1,11 +1,11 @@
 # CreateToy
 
-Модульный интернет-магазин праздничных сувениров, напечатанных на 3D-принтере. Сейчас проект работает в **локальном демо-режиме**: каталог, корзина, заказы, роли и настройки сохраняются в `localStorage` браузера. Firebase-адаптеры подключаются позже без переписывания интерфейса.
+Модульный интернет-магазин праздничных сувениров, напечатанных на 3D-принтере. Сайт работает с **Supabase Free**: PostgreSQL, Auth, RLS и общие настройки. Если публичные переменные Supabase не заданы, приложение автоматически переходит в локальный демо-режим с хранением данных в `localStorage`.
 
-- Демо на GitHub Pages: <https://tecnika.github.io/CreateToy/>
+- Сайт на GitHub Pages: <https://tecnika.github.io/CreateToy/>
 - Репозиторий: <https://github.com/Tecnika/CreateToy>
-- Стек: React 19, TypeScript, Vite 8, Tailwind CSS 3, React Router 6, Vitest
-- Планируемый хостинг: GitHub Pages и Firebase Hosting на бесплатном плане Spark
+- Стек: React 19, TypeScript, Vite 8, Tailwind CSS 3, React Router 6, Supabase, Vitest
+- Хостинг: GitHub Pages, без карты и собственного сервера
 
 ## Возможности
 
@@ -49,7 +49,7 @@
 
 ## Быстрый старт
 
-Требуется Node.js 24.12+ (этого требует Firebase SDK).
+Требуется Node.js 24.12+.
 
 ```powershell
 npm install
@@ -70,7 +70,7 @@ npm run dev
 
 Демо-данные (пользователи, товары, заказы, темы, настройки) создаются автоматически при первом запуске и сохраняются с префиксом `createtoy:` в `localStorage`.
 
-Пароль реального администратора `Administrator` для Firebase хранится только в `.secrets/credentials.env`; в демо-режиме используется `demo1234`.
+Пароли реальных администратора `Administrator` и менеджера `manager@createtoy.local` для Supabase хранятся только в `.secrets/supabase.env`; в демо-режиме используется `demo1234`.
 
 Сбросить демо-состояние можно из консоли браузера:
 
@@ -101,10 +101,11 @@ src/
   core/
     domain/         классы Money, Cart, Order, HolidayTheme, ConfiguratorTemplate
     data/           демо-товары, шаблоны, пользователи, заказы, настройки
-    repositories/   интерфейсы и localStorage-реализации
+    repositories/   интерфейсы, localStorage- и Supabase-реализации
     services/       Auth, Catalog, Cart, Order, Theme, Settings, Configurator
-    auth/           AuthAdapter и MockAuthAdapter
-    container.ts    единая точка сборки сервисов
+    supabase/       клиент, кэш, мапперы и работа с ошибками
+    auth/           MockAuthAdapter и SupabaseAuthAdapter
+    container.ts    единая точка сборки сервисов и выбор режима данных
   components/       layout, product, configurator, order, admin, ui
   pages/            публичные страницы, кабинет, менеджер, админка
   state/            React-контексты Auth, Cart, Theme, Settings
@@ -115,12 +116,13 @@ src/
 Ключевые принципы:
 
 - Доменные правила находятся в классах, а не в компонентах.
-- Сервисы зависят от интерфейсов репозиториев, поэтому localStorage можно заменить на Firestore.
+- Сервисы зависят от интерфейсов репозиториев: localStorage и Supabase взаимозаменяемы.
+- Чтение данных синхронное из прогретого кэша, запись — асинхронная в Supabase, поэтому интерфейс не мигает при каждом действии.
 - Общие изменения (цена, статусы, роли, темы) проводятся через доменное ядро и контейнер сервисов.
 - Страницы загружаются лениво, чтобы не отдавать весь JavaScript сразу.
 - Праздничная тема — объект с палитрой, текстами, товарами и эффектом; новая тема не требует правок страниц.
 
-Точка подключения Firebase — `src/core/container.ts`. Достаточно реализовать адаптеры репозиториев и AuthAdapter и заменить локальные классы.
+Точка выбора режима — `src/core/container.ts`. При `VITE_DATA_MODE=supabase` используются адаптеры из `src/core/supabase/` и `src/core/repositories/supabase/`, иначе — локальные.
 
 ## Деплой на GitHub Pages
 
@@ -146,33 +148,52 @@ npm run build
 npm run preview
 ```
 
-## Firebase на Spark
+## Режимы данных
 
-Проект рассчитан на бесплатный план **Spark**. Firebase-проект ещё не создан, поэтому реальные Auth, Firestore и Hosting пока не подключены.
+| Режим | Когда включается | Где хранятся данные |
+| --- | --- | --- |
+| `supabase` | `VITE_DATA_MODE=supabase` и заданы URL + anon key | PostgreSQL Supabase, Auth и общие настройки |
+| `demo` | По умолчанию или если облако не задано | `localStorage` браузера |
 
-Когда появятся credentials:
+Публичные переменные для локального файла `.env.local`:
 
-1. Создать Firebase-проект на Spark и Firestore в `europe-west3`.
-2. Включить Email/Password и Google в Authentication.
-3. Заполнить `.env.local` (web config) и `.secrets/credentials.env` (service account, admin).
-4. Реализовать Firebase-адаптеры Auth и репозиториев, правила Firestore и индексы.
-5. Создать администратора `Administrator` локальным seed-скриптом.
-6. Задеплоить Hosting командой `firebase deploy --only hosting`.
+```dotenv
+VITE_DATA_MODE=supabase
+VITE_SUPABASE_URL=https://ztfjefnnkjnsuefplxpg.supabase.co
+VITE_SUPABASE_ANON_KEY=ваш_anon_или_publishable_key
+VITE_ADMIN_LOGIN=Administrator
+VITE_ADMIN_EMAIL=admin@createtoy.local
+```
 
-Ограничения Spark:
+`service_role` и строку подключения к PostgreSQL нельзя добавлять в `VITE_*`: они обходят RLS. Эти значения хранятся только в `.secrets/`.
 
-- **Storage недоступен для новых проектов** — для него нужен Blaze. Загрузки покупателей убраны, а карточки товаров используют встроенную графику, поэтому Storage для MVP не обязателен.
-- **Cloud Functions требуют Blaze** — нет автоматических писем, custom claims и серверной проверки оплаты.
-- Роли хранятся в Firestore и проверяются security rules, а не через custom claims.
-- Администратор создаётся локальным скриптом с service account.
-- Сложные серверные проверки и автоматизация оплаты откладываются.
+## Supabase
 
-Подробная пошаговая инструкция: [`docs/FIREBASE-SPARK.md`](docs/FIREBASE-SPARK.md). Общая настройка Windows: [`docs/SETUP-WINDOWS.md`](docs/SETUP-WINDOWS.md).
+Бесплатный проект уже настроен: 8 таблиц, RLS-политики, триггеры, каталог, темы, шаблоны, настройки и аккаунты `Administrator` и `manager@createtoy.local`. Подробная инструкция и текущий чек-лист: [`docs/SUPABASE-SETUP.md`](docs/SUPABASE-SETUP.md).
+
+Полезные команды:
+
+```powershell
+node --env-file=.secrets/supabase.env scripts/db-seed.mjs
+npm run build
+```
+
+При регистрации с включённым подтверждением email интерфейс показывает экран «Проверьте почту». Чтобы покупатели входили сразу, в Supabase Dashboard отключите **Authentication → Providers → Email → Confirm email**.
+
+## Ограничения Supabase Free
+
+- 500 МБ базы, 1 ГБ Storage и 50 000 MAU — для магазина сувениров этого достаточно на старте.
+- Проект засыпает после 7 дней без запросов; первый запрос после паузы может занять несколько секунд.
+- Встроенная почта Supabase имеет лимиты. Для подтверждения email и восстановления пароля лучше подключить SMTP.
+- Автоматических бэкапов на Free нет — периодически делайте `pg_dump` вручную.
+- Storage для загрузок покупателей не используется: карточки товаров рисуются компонентом `SouvenirArt`.
+
+Настройка Windows и локальные команды: [`docs/SETUP-WINDOWS.md`](docs/SETUP-WINDOWS.md).
 
 ## Безопасность
 
-- `.secrets/` и service account JSON исключены из git.
-- Пароль реального администратора хранится только в `.secrets/credentials.env`, а не в коде.
+- `.secrets/` исключён из git: там лежат `service_role`, строка подключения и пароли сотрудников.
+- Пароли реальных администратора и менеджера хранятся только в `.secrets/supabase.env`, а не в коде.
 - В клиентский код нельзя добавлять секреты через `VITE_*`: они попадают в браузер.
 - Токены и пароли, которые передавались в переписке, следует перевыпустить после настройки.
 - Демо-режим не является продакшен-аутентификацией: данные и пароли лежат в браузере.

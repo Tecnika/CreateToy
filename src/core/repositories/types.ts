@@ -7,19 +7,23 @@ import type {
   UserProfile,
 } from '../domain/types';
 
+export type MaybePromise<T> = T | Promise<T>;
+
 export interface ProductRepository {
   list(): Product[];
   getById(id: string): Product | undefined;
   getBySlug(slug: string): Product | undefined;
-  save(product: Product): void;
-  remove(id: string): void;
+  save(product: Product): MaybePromise<void>;
+  remove(id: string): MaybePromise<void>;
 }
 
 export interface OrderRepository {
   listAll(): Order[];
   listByUser(userId: string): Order[];
   getById(id: string): Order | undefined;
-  save(order: Order): void;
+  create(order: Order): MaybePromise<Order>;
+  update(order: Order): MaybePromise<Order>;
+  cancel?(id: string): MaybePromise<Order>;
 }
 
 export interface UserRepository {
@@ -27,22 +31,22 @@ export interface UserRepository {
   getById(id: string): UserProfile | undefined;
   getByEmail(email: string): UserProfile | undefined;
   getByLogin(login: string): UserProfile | undefined;
-  save(user: UserProfile): void;
+  save(user: UserProfile): MaybePromise<void>;
 }
 
 export interface SettingsRepository {
   get(): SiteSettings;
-  save(settings: SiteSettings): void;
+  save(settings: SiteSettings): MaybePromise<void>;
 }
 
 export interface ThemeRepository {
   listCustom(): HolidayThemeData[];
-  saveCustom(theme: HolidayThemeData): void;
-  removeCustom(id: string): void;
+  saveCustom(theme: HolidayThemeData): MaybePromise<void>;
+  removeCustom(id: string): MaybePromise<void>;
 }
 
 export interface TemplateRepository {
   listCustom(): ConfiguratorTemplateData[];
-  saveCustom(template: ConfiguratorTemplateData): void;
-  removeCustom(id: string): void;
+  saveCustom(template: ConfiguratorTemplateData): MaybePromise<void>;
+  removeCustom(id: string): MaybePromise<void>;
 }

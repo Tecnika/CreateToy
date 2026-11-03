@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { ArrowRight, Check, LockKeyhole, Mail, UserRound } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { EmailConfirmationRequiredError, type SocialProvider } from '../core/auth/AuthAdapter';
 import { useAuth } from '../state/AuthContext';
 import { Logo } from '../components/ui/Logo';
 
@@ -11,7 +12,7 @@ const benefits = [
 ];
 
 export function RegisterPage() {
-  const { register, signInDemo } = useAuth();
+  const { register, signInDemo, signInWithProvider, isDemo } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = params.get('next');
@@ -20,6 +21,7 @@ export function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
+  const [confirmationEmail, setConfirmationEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
@@ -38,18 +40,26 @@ export function RegisterPage() {
       await register({ displayName, email, password });
       navigate(next || '/account', { replace: true });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Не удалось зарегистрироваться.');
+      if (caught instanceof EmailConfirmationRequiredError) {
+        setConfirmationEmail(email.trim().toLowerCase());
+      } else {
+        setError(caught instanceof Error ? caught.message : 'Не удалось зарегистрироваться.');
+      }
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleSocial() {
+  async function handleSocial(provider: SocialProvider) {
     setError('');
     setLoading(true);
     try {
-      await signInDemo('buyer');
-      navigate(next || '/account', { replace: true });
+      if (isDemo) {
+        await signInDemo('buyer');
+        navigate(next || '/account', { replace: true });
+        return;
+      }
+      await signInWithProvider(provider);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Не удалось войти.');
     } finally {
@@ -77,7 +87,9 @@ export function RegisterPage() {
             ))}
           </div>
           <p className="relative mt-7 rounded-2xl bg-surface-2/70 p-4 text-xs leading-5 text-muted">
-            Регистрация занимает меньше минуты. В демо-режиме аккаунт создаётся локально и не отправляется на сервер.
+            {isDemo
+              ? 'Регистрация занимает меньше минуты. В демо-режиме аккаунт создаётся локально и не отправляется на сервер.'
+              : 'Регистрация занимает меньше минуты. Аккаунт и заказы хранятся в защищённом облаке Supabase.'}
           </p>
         </div>
       </div>
@@ -88,7 +100,28 @@ export function RegisterPage() {
           <h1 className="display-title mt-6 text-3xl">Создать аккаунт</h1>
           <p className="mt-2 text-sm leading-6 text-muted">Имя, email и пароль — этого достаточно.</p>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          {confirmationEmail && (
+            <div className="mt-6 rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+              <div className="flex items-start gap-3">
+                <Check size={20} className="mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-extrabold">Проверьте почту</p>
+                  <p className="mt-1 text-xs leading-5">
+                    Мы отправили письмо на <span className="font-bold">{confirmationEmail}</span>. Перейдите по ссылке
+                    из письма, затем войдите в аккаунт.
+                  </p>
+                  <Link
+                    to={next ? `/login?next=${encodeURIComponent(next)}` : '/login'}
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-900 hover:underline"
+                  >
+                    Перейти ко входу <ArrowRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className={`mt-6 space-y-4 ${confirmationEmail ? 'hidden' : ''}`}>
             <div>
               <label className="field-label" htmlFor="register-name">Имя</label>
               <div className="relative">
@@ -123,14 +156,18 @@ export function RegisterPage() {
             </button>
           </form>
 
-          <div className="my-5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
-            <span className="h-px flex-1 bg-line" /> или <span className="h-px flex-1 bg-line" />
-          </div>
+          {!confirmationEmail && (
+            <>
+              <div className="my-5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+                <span className="h-px flex-1 bg-line" /> или <span className="h-px flex-1 bg-line" />
+              </div>
 
-          <button type="button" onClick={handleSocial} className="btn-secondary w-full text-xs" disabled={loading}>
-            <span className="font-display text-sm font-semibold">G</span>
-            Продолжить с Google · демо
-          </button>
+              <button type="button" onClick={() => handleSocial('google')} className="btn-secondary w-full text-xs" disabled={loading}>
+                <span className="font-display text-sm font-semibold">G</span>
+                Продолжить с Google{isDemo ? ' · демо' : ''}
+              </button>
+            </>
+          )}
 
           <p className="mt-6 text-center text-sm text-muted">
             Уже есть аккаунт?{' '}

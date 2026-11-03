@@ -31,7 +31,17 @@ export class LocalOrderRepository implements OrderRepository {
     return this.listAll().find((order) => order.data.id === id);
   }
 
-  save(order: Order): void {
+  create(order: Order): Order {
+    this.persist(order);
+    return order;
+  }
+
+  update(order: Order): Order {
+    this.persist(order);
+    return order;
+  }
+
+  private persist(order: Order): void {
     const all = this.raw();
     const index = all.findIndex((item) => item.id === order.data.id);
     if (index >= 0) all[index] = order.toJSON();

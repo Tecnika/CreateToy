@@ -35,6 +35,11 @@ jobs:
         run: npm run build
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_DATA_MODE: supabase
+          VITE_SUPABASE_URL: https://ztfjefnnkjnsuefplxpg.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_kPDcn77nZPCp-8-9Xr2JnQ_0fUA4uhH
+          VITE_ADMIN_LOGIN: Administrator
+          VITE_ADMIN_EMAIL: admin@createtoy.local
 
       - name: Add SPA fallback and disable Jekyll
         run: |

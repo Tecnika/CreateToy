@@ -10,4 +10,5 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   currency: 'RUB',
   deliveryMethods: ['Самовывоз', 'СДЭК', 'Почта России', 'Курьер по Москве'],
   paymentMethods: ['Перевод по реквизитам', 'СБП', 'Наличные при самовывозе'],
+  activeThemeId: 'base',
 };

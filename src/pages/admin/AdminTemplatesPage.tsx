@@ -67,6 +67,7 @@ export function AdminTemplatesPage() {
   const [draft, setDraft] = useState<ConfiguratorTemplateData | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const [optionTexts, setOptionTexts] = useState<Record<string, string>>({});
 
   const templates = services.configurator.list();
@@ -123,9 +124,9 @@ export function AdminTemplatesPage() {
     });
   }
 
-  function save(event: FormEvent) {
+  async function save(event: FormEvent) {
     event.preventDefault();
-    if (!draft) return;
+    if (!draft || busy) return;
     setError('');
     if (draft.name.trim().length < 2) {
       setError('Укажите название шаблона.');
@@ -144,22 +145,38 @@ export function AdminTemplatesPage() {
       label: field.label.trim(),
       options: ['select', 'color'].includes(field.type) ? textToOptions(optionTexts[field.id] ?? optionsToText(field.options)) : undefined,
     }));
-    services.configurator.save({ ...draft, name: draft.name.trim(), description: draft.description.trim(), fields });
-    setVersion((value) => value + 1);
-    setDraft(null);
-    setMessage('Шаблон сохранён. Его можно выбрать при создании товара.');
+    setBusy(true);
+    try {
+      await services.configurator.save({ ...draft, name: draft.name.trim(), description: draft.description.trim(), fields });
+      setVersion((value) => value + 1);
+      setDraft(null);
+      setMessage('Шаблон сохранён. Его можно выбрать при создании товара.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось сохранить шаблон.');
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function remove(id: string) {
+  async function remove(id: string) {
+    if (busy) return;
     const usedBy = products.filter((product) => product.templateId === id);
     if (usedBy.length > 0) {
       setError(`Шаблон используют товары: ${usedBy.map((product) => product.title).join(', ')}. Сначала смените им шаблон.`);
       return;
     }
     if (!window.confirm('Удалить шаблон? Для встроенного шаблона вернётся стандартная версия.')) return;
-    services.configurator.removeCustom(id);
-    setVersion((value) => value + 1);
-    setMessage('Шаблон удалён.');
+    setBusy(true);
+    setError('');
+    try {
+      await services.configurator.removeCustom(id);
+      setVersion((value) => value + 1);
+      setMessage('Шаблон удалён.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось удалить шаблон.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -284,7 +301,7 @@ export function AdminTemplatesPage() {
 
           <div className="mt-5 flex justify-end gap-2">
             <button type="button" onClick={() => setDraft(null)} className="btn-secondary px-4 py-2.5 text-xs">Отмена</button>
-            <button type="submit" className="btn-primary px-4 py-2.5 text-xs"><Check size={15} /> Сохранить шаблон</button>
+            <button type="submit" className="btn-primary px-4 py-2.5 text-xs" disabled={busy}><Check size={15} /> {busy ? 'Сохраняем...' : 'Сохранить шаблон'}</button>
           </div>
         </form>
       )}
@@ -305,7 +322,7 @@ export function AdminTemplatesPage() {
                 </div>
                 <div className="flex gap-1">
                   <button type="button" onClick={() => openEdit(template.data)} className="btn-icon h-8 w-8" aria-label="Редактировать шаблон"><Pencil size={13} /></button>
-                  <button type="button" onClick={() => remove(template.id)} className="btn-icon h-8 w-8 text-rose-600" aria-label="Удалить шаблон"><Trash2 size={13} /></button>
+                  <button type="button" onClick={() => remove(template.id)} className="btn-icon h-8 w-8 text-rose-600" aria-label="Удалить шаблон" disabled={busy}><Trash2 size={13} /></button>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">

@@ -56,6 +56,7 @@ export function AdminThemesPage() {
   const [draft, setDraft] = useState<HolidayThemeData | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   function openNew() {
     setDraft(createDraft(base.data));
@@ -89,41 +90,61 @@ export function AdminThemesPage() {
     update('featuredProductIds', selected);
   }
 
-  function saveTheme(event: FormEvent) {
+  async function saveTheme(event: FormEvent) {
     event.preventDefault();
-    if (!draft) return;
+    if (!draft || busy) return;
     setError('');
     if (draft.name.trim().length < 2 || draft.shortName.trim().length < 2) {
       setError('Укажите название и короткое название темы.');
       return;
     }
-    addCustomTheme({
-      ...draft,
-      name: draft.name.trim(),
-      shortName: draft.shortName.trim(),
-      tagline: draft.tagline.trim(),
-      description: draft.description.trim(),
-      dateLabel: draft.dateLabel.trim() || 'Весь год',
-      isCustom: true,
-    });
-    setDraft(null);
-    setMessage('Тема сохранена. Её можно активировать в списке.');
-  }
-
-  function activate(id: string) {
-    setError('');
+    setBusy(true);
     try {
-      setActiveTheme(id);
-      setMessage('Тема применена к сайту.');
+      await addCustomTheme({
+        ...draft,
+        name: draft.name.trim(),
+        shortName: draft.shortName.trim(),
+        tagline: draft.tagline.trim(),
+        description: draft.description.trim(),
+        dateLabel: draft.dateLabel.trim() || 'Весь год',
+        isCustom: true,
+      });
+      setDraft(null);
+      setMessage('Тема сохранена. Её можно активировать в списке.');
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Не удалось применить тему.');
+      setError(caught instanceof Error ? caught.message : 'Не удалось сохранить тему.');
+    } finally {
+      setBusy(false);
     }
   }
 
-  function remove(id: string) {
+  async function activate(id: string) {
+    if (busy) return;
+    setError('');
+    setBusy(true);
+    try {
+      await setActiveTheme(id);
+      setMessage('Тема применена к сайту.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось применить тему.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(id: string) {
+    if (busy) return;
     if (!window.confirm('Удалить свою тему? Это действие нельзя отменить.')) return;
-    removeCustomTheme(id);
-    setMessage('Тема удалена.');
+    setError('');
+    setBusy(true);
+    try {
+      await removeCustomTheme(id);
+      setMessage('Тема удалена.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось удалить тему.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -149,8 +170,8 @@ export function AdminThemesPage() {
 
       <div className="rounded-2xl border border-line bg-surface-2/50 p-3.5 text-xs leading-5 text-muted">
         <Sparkles size={15} className="mr-1.5 inline text-accent" />
-        Сейчас активна <span className="font-bold text-ink">{theme.data.name}</span>. В демо-режиме выбор сохраняется в
-        браузере. После подключения Firebase тема станет общей для всех посетителей.
+        Сейчас активна <span className="font-bold text-ink">{theme.data.name}</span>. Выбор сохраняется в настройках
+        сайта и применяется для всех посетителей.
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -186,7 +207,7 @@ export function AdminThemesPage() {
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {item.id !== theme.id && (
-                  <button type="button" onClick={() => activate(item.id)} className="btn-secondary px-3 py-2 text-[11px]">
+                  <button type="button" onClick={() => activate(item.id)} className="btn-secondary px-3 py-2 text-[11px]" disabled={busy}>
                     <Check size={13} /> Включить
                   </button>
                 )}
@@ -195,7 +216,7 @@ export function AdminThemesPage() {
                     <button type="button" onClick={() => openEdit(item.id)} className="btn-icon h-8 w-8" aria-label="Редактировать тему">
                       <Pencil size={13} />
                     </button>
-                    <button type="button" onClick={() => remove(item.id)} className="btn-icon h-8 w-8 text-rose-600" aria-label="Удалить тему">
+                    <button type="button" onClick={() => remove(item.id)} className="btn-icon h-8 w-8 text-rose-600" aria-label="Удалить тему" disabled={busy}>
                       <Trash2 size={13} />
                     </button>
                   </>
@@ -300,7 +321,7 @@ export function AdminThemesPage() {
 
           <div className="mt-5 flex justify-end gap-2">
             <button type="button" onClick={() => setDraft(null)} className="btn-secondary px-4 py-2.5 text-xs">Отмена</button>
-            <button type="submit" className="btn-primary px-4 py-2.5 text-xs"><Check size={15} /> Сохранить тему</button>
+            <button type="submit" className="btn-primary px-4 py-2.5 text-xs" disabled={busy}><Check size={15} /> {busy ? 'Сохраняем...' : 'Сохранить тему'}</button>
           </div>
         </form>
       )}

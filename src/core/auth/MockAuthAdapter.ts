@@ -2,9 +2,10 @@ import { DEMO_CREDENTIALS, DEMO_PASSWORD, DEMO_USERS } from '../data/demo';
 import type { Role, UserProfile } from '../domain/types';
 import type { UserRepository } from '../repositories/types';
 import type { Storage } from '../storage/Storage';
-import type { AuthAdapter, ProfilePatch, RegisterInput } from './AuthAdapter';
+import type { AuthAdapter, ProfilePatch, RegisterInput, SocialProvider } from './AuthAdapter';
 
 export class MockAuthAdapter implements AuthAdapter {
+  readonly isDemo = true;
   private readonly currentKey = 'auth:current';
   private readonly passwordsKey = 'auth:passwords';
   private readonly listeners = new Set<(user: UserProfile | null) => void>();
@@ -20,6 +21,10 @@ export class MockAuthAdapter implements AuthAdapter {
       }, {});
       this.storage.set(this.passwordsKey, passwords);
     }
+  }
+
+  async initialize(): Promise<void> {
+    // Local demo data is available synchronously.
   }
 
   getCurrentUser(): UserProfile | null {
@@ -74,6 +79,10 @@ export class MockAuthAdapter implements AuthAdapter {
     if (!demo) throw new Error('Демо-пользователь не найден.');
     this.persist(demo);
     return demo;
+  }
+
+  async signInWithProvider(_provider: SocialProvider): Promise<void> {
+    await this.signInDemo('buyer');
   }
 
   async updateProfile(patch: ProfilePatch): Promise<UserProfile> {

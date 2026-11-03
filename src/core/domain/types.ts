@@ -219,6 +219,7 @@ export interface SiteSettings {
   currency: 'RUB';
   deliveryMethods: string[];
   paymentMethods: string[];
+  activeThemeId?: string;
 }
 
 export interface DemoCredentials {

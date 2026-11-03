@@ -52,12 +52,12 @@ export function OrderDetailPage() {
   const data = order.data;
   const managerEmail = settings.contactEmail;
 
-  function cancelOrder() {
+  async function cancelOrder() {
     if (!user) return;
     if (!window.confirm('Отменить заказ? Это действие нельзя отменить.')) return;
     setError('');
     try {
-      services.orders.cancelByBuyer(data.id, user.uid);
+      await services.orders.cancelByBuyer(data.id, user.uid);
       setVersion((value) => value + 1);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Не удалось отменить заказ.');

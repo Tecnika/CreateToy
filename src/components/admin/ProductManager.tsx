@@ -63,6 +63,7 @@ export function ProductManager({
   const [draft, setDraft] = useState<Product | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const products = services.catalog.list();
 
@@ -98,9 +99,9 @@ export function ProductManager({
     );
   }
 
-  function save(event: FormEvent) {
+  async function save(event: FormEvent) {
     event.preventDefault();
-    if (!draft) return;
+    if (!draft || busy) return;
     setError('');
     const slug = draft.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     if (draft.title.trim().length < 2) {
@@ -119,23 +120,39 @@ export function ProductManager({
       setError('Укажите цену больше нуля.');
       return;
     }
-    services.catalog.save({
-      ...draft,
-      slug,
-      title: draft.title.trim(),
-      subtitle: draft.subtitle.trim(),
-      description: draft.description.trim(),
-    });
-    setVersion((value) => value + 1);
-    setDraft(null);
-    setMessage('Товар сохранён.');
+    setBusy(true);
+    try {
+      await services.catalog.save({
+        ...draft,
+        slug,
+        title: draft.title.trim(),
+        subtitle: draft.subtitle.trim(),
+        description: draft.description.trim(),
+      });
+      setVersion((value) => value + 1);
+      setDraft(null);
+      setMessage('Товар сохранён.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось сохранить товар.');
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function remove(product: Product) {
+  async function remove(product: Product) {
+    if (busy) return;
     if (!window.confirm(`Удалить «${product.title}» из каталога?`)) return;
-    services.catalog.remove(product.id);
-    setVersion((value) => value + 1);
-    setMessage('Товар удалён из каталога.');
+    setBusy(true);
+    setError('');
+    try {
+      await services.catalog.remove(product.id);
+      setVersion((value) => value + 1);
+      setMessage('Товар удалён из каталога.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось удалить товар.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -299,7 +316,7 @@ export function ProductManager({
 
           <div className="mt-5 flex justify-end gap-2">
             <button type="button" onClick={() => setDraft(null)} className="btn-secondary px-4 py-2.5 text-xs">Отмена</button>
-            <button type="submit" className="btn-primary px-4 py-2.5 text-xs"><Check size={15} /> Сохранить товар</button>
+            <button type="submit" className="btn-primary px-4 py-2.5 text-xs" disabled={busy}><Check size={15} /> {busy ? 'Сохраняем...' : 'Сохранить товар'}</button>
           </div>
         </form>
       )}
@@ -329,7 +346,7 @@ export function ProductManager({
               <div className="flex gap-1.5">
                 <button type="button" onClick={() => openEdit(product)} className="btn-icon h-9 w-9" aria-label="Редактировать товар"><Pencil size={14} /></button>
                 {canDelete && (
-                  <button type="button" onClick={() => remove(product)} className="btn-icon h-9 w-9 text-rose-600" aria-label="Удалить товар"><Trash2 size={14} /></button>
+                  <button type="button" onClick={() => remove(product)} className="btn-icon h-9 w-9 text-rose-600" aria-label="Удалить товар" disabled={busy}><Trash2 size={14} /></button>
                 )}
               </div>
             </div>

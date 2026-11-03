@@ -57,11 +57,11 @@ export class CatalogService {
     });
   }
 
-  save(product: Product): void {
-    this.repository.save(product);
+  async save(product: Product): Promise<void> {
+    await this.repository.save(product);
   }
 
-  remove(id: string): void {
-    this.repository.remove(id);
+  async remove(id: string): Promise<void> {
+    await this.repository.remove(id);
   }
 }

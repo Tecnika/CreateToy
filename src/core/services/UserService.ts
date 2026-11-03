@@ -12,11 +12,11 @@ export class UserService {
     return this.repository.getById(id);
   }
 
-  updateRole(uid: string, role: Role): UserProfile {
+  async updateRole(uid: string, role: Role): Promise<UserProfile> {
     const user = this.repository.getById(uid);
     if (!user) throw new Error('Пользователь не найден.');
     const updated: UserProfile = { ...user, role };
-    this.repository.save(updated);
+    await this.repository.save(updated);
     return updated;
   }
 }

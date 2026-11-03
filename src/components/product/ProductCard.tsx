@@ -33,7 +33,7 @@ export function ProductCard({ product }: { product: Product }) {
 
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <h3 className="display-title text-xl leading-tight">{product.title}</h3>
             <p className="mt-1.5 text-sm leading-5 text-muted">{product.subtitle}</p>
           </div>

@@ -9,11 +9,12 @@ import { formatDate } from '../../utils/format';
 const roles: Role[] = ['buyer', 'manager', 'admin'];
 
 export function AdminUsersPage() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isDemo } = useAuth();
   const [version, setVersion] = useState(0);
   const [query, setQuery] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const users = useMemo(() => services.users.list(), [version]);
   const orders = useMemo(() => services.orders.listAll(), [version]);
@@ -27,7 +28,8 @@ export function AdminUsersPage() {
     );
   }, [users, query]);
 
-  function changeRole(uid: string, role: Role) {
+  async function changeRole(uid: string, role: Role) {
+    if (busy) return;
     setMessage('');
     setError('');
     const target = users.find((user) => user.uid === uid);
@@ -36,12 +38,15 @@ export function AdminUsersPage() {
       setError('Нельзя убрать последнего администратора.');
       return;
     }
+    setBusy(true);
     try {
-      services.users.updateRole(uid, role);
+      await services.users.updateRole(uid, role);
       setVersion((value) => value + 1);
       setMessage(`Роль «${target.displayName}» изменена на «${ROLE_LABELS[role]}».`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Не удалось изменить роль.');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -92,7 +97,7 @@ export function AdminUsersPage() {
                   <select
                     className="select w-40 py-2.5 text-xs"
                     value={user.role}
-                    disabled={isSelf}
+                    disabled={isSelf || busy}
                     onChange={(event) => changeRole(user.uid, event.target.value as Role)}
                     aria-label={`Роль ${user.displayName}`}
                   >
@@ -110,7 +115,8 @@ export function AdminUsersPage() {
 
       <div className="rounded-2xl border border-line bg-surface-2/50 p-4 text-xs leading-5 text-muted">
         <ShieldCheck size={15} className="mr-1.5 inline text-accent" />
-        Свою роль изменить нельзя — это защищает от случайной потери доступа. В демо-режиме роли сохраняются в браузере.
+        Свою роль изменить нельзя — это защищает от случайной потери доступа.{' '}
+        {isDemo ? 'В демо-режиме роли сохраняются в браузере.' : 'В облачном режиме роли сохраняются в Supabase.'}
       </div>
     </div>
   );
