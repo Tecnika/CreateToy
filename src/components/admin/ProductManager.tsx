@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Archive, Check, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { services } from '../../core/container';
 import { Money } from '../../core/domain/Money';
@@ -9,6 +9,8 @@ import { SouvenirArt } from '../product/SouvenirArt';
 
 interface ProductManagerProps {
   canDelete?: boolean;
+  canArchive?: boolean;
+  canRestore?: boolean;
   showHeader?: boolean;
   showTemplateLink?: boolean;
 }
@@ -53,6 +55,8 @@ function createDraft(templateId: string): Product {
 
 export function ProductManager({
   canDelete = false,
+  canArchive = false,
+  canRestore = false,
   showHeader = true,
   showTemplateLink = false,
 }: ProductManagerProps) {
@@ -64,8 +68,12 @@ export function ProductManager({
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
+  const allProducts = services.catalog.listAll();
   const products = services.catalog.list();
+  const archived = allProducts.filter((product) => product.archivedAt);
+  const visibleProducts = canRestore && showArchived ? allProducts : products;
 
   function openNew() {
     setDraft(createDraft(templates[0]?.id ?? 'figure'));
@@ -112,7 +120,7 @@ export function ProductManager({
       setError('Укажите slug латиницей — он нужен для ссылки.');
       return;
     }
-    if (products.some((product) => product.slug === slug && product.id !== draft.id)) {
+    if (allProducts.some((product) => product.slug === slug && product.id !== draft.id)) {
       setError('Товар с таким slug уже есть.');
       return;
     }
@@ -139,15 +147,46 @@ export function ProductManager({
     }
   }
 
+  async function archive(product: Product) {
+    if (busy) return;
+    if (!window.confirm(`Скрыть «${product.title}» из каталога? Восстановить сможет только администратор.`)) return;
+    setBusy(true);
+    setError('');
+    try {
+      await services.catalog.archive(product.id);
+      setVersion((value) => value + 1);
+      setMessage('Товар скрыт из каталога. Восстановить сможет только администратор.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось скрыть товар.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function restore(product: Product) {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      await services.catalog.restore(product.id);
+      setVersion((value) => value + 1);
+      setMessage('Товар восстановлен и снова виден в каталоге.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось восстановить товар.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function remove(product: Product) {
     if (busy) return;
-    if (!window.confirm(`Удалить «${product.title}» из каталога?`)) return;
+    if (!window.confirm(`Удалить «${product.title}» навсегда? Это действие нельзя отменить.`)) return;
     setBusy(true);
     setError('');
     try {
       await services.catalog.remove(product.id);
       setVersion((value) => value + 1);
-      setMessage('Товар удалён из каталога.');
+      setMessage('Товар удалён навсегда.');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Не удалось удалить товар.');
     } finally {
@@ -162,7 +201,7 @@ export function ProductManager({
           <div>
             <span className="eyebrow mb-3">Каталог</span>
             <h1 className="display-title text-3xl sm:text-4xl">Товары</h1>
-            <p className="mt-2 text-sm text-muted">Добавляйте сувениры и привязывайте их к шаблонам конструктора.</p>
+            <p className="mt-2 text-sm text-muted">Добавляйте сувениры и привязывайте их к шаблонам конструктора. Скрытые карточки не видны покупателям.</p>
           </div>
           <button type="button" onClick={openNew} className="btn-primary px-4 py-2.5 text-xs">
             <Plus size={15} /> Добавить товар
@@ -322,35 +361,63 @@ export function ProductManager({
       )}
 
       <div className="surface-card overflow-hidden">
-        <div className="border-b border-line bg-surface-2/50 px-4 py-3 text-xs font-bold text-muted">
-          {products.length} товаров · <span className="text-ink">{products.filter((product) => product.featured).length}</span> в подборке
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface-2/50 px-4 py-3 text-xs font-bold text-muted">
+          <span>
+            {visibleProducts.length} товаров · <span className="text-ink">{visibleProducts.filter((product) => product.featured).length}</span> в подборке
+            {archived.length > 0 && <> · <span className="text-rose-600">{archived.length} скрыто</span></>}
+          </span>
+          {canRestore && archived.length > 0 && (
+            <button type="button" onClick={() => setShowArchived((value) => !value)} className="btn-secondary px-3 py-1.5 text-[10px]">
+              {showArchived ? 'Скрыть скрытые' : `Показать скрытые (${archived.length})`}
+            </button>
+          )}
         </div>
         <div className="divide-y divide-line">
-          {products.map((product) => (
-            <div key={product.id} className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:gap-4">
-              <div
-                className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl"
-                style={{ background: `linear-gradient(145deg, ${product.art.colors[1]}, ${product.art.colors[0]})` }}
-              >
-                <SouvenirArt art={product.art} label={product.title} className="h-full w-full" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-extrabold">{product.title}</p>
-                  {product.badge && <span className="badge">{product.badge}</span>}
+          {visibleProducts.map((product) => {
+            const isArchived = Boolean(product.archivedAt);
+            return (
+              <div key={product.id} className={`flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:gap-4 ${isArchived ? 'bg-surface-2/40' : ''}`}>
+                <div
+                  className={`h-16 w-16 shrink-0 overflow-hidden rounded-2xl ${isArchived ? 'opacity-50 grayscale' : ''}`}
+                  style={{ background: `linear-gradient(145deg, ${product.art.colors[1]}, ${product.art.colors[0]})` }}
+                >
+                  <SouvenirArt art={product.art} label={product.title} className="h-full w-full" />
                 </div>
-                <p className="mt-0.5 truncate text-xs text-muted">{product.slug} · {product.category} · {product.materials}</p>
-                <p className="mt-0.5 text-[10px] text-muted">Шаблон: {templates.find((template) => template.id === product.templateId)?.data.name ?? product.templateId}</p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-extrabold">{product.title}</p>
+                    {product.badge && <span className="badge">{product.badge}</span>}
+                    {isArchived && <span className="badge bg-rose-100 text-rose-700">Скрыт</span>}
+                  </div>
+                  <p className="mt-0.5 truncate text-xs text-muted">{product.slug} · {product.category} · {product.materials}</p>
+                  <p className="mt-0.5 text-[10px] text-muted">Шаблон: {templates.find((template) => template.id === product.templateId)?.data.name ?? product.templateId}</p>
+                </div>
+                <p className="font-display text-base font-semibold sm:w-24 sm:text-right">{Money.from(product.price).format()}</p>
+                <div className="flex gap-1.5">
+                  {isArchived ? (
+                    canRestore && (
+                      <button type="button" onClick={() => restore(product)} className="btn-icon h-9 w-9 text-emerald-600" aria-label="Восстановить товар" disabled={busy}>
+                        <RotateCcw size={14} />
+                      </button>
+                    )
+                  ) : (
+                    <>
+                      <button type="button" onClick={() => openEdit(product)} className="btn-icon h-9 w-9" aria-label="Редактировать товар"><Pencil size={14} /></button>
+                      {canArchive && (
+                        <button type="button" onClick={() => archive(product)} className="btn-icon h-9 w-9 text-amber-600" aria-label="Скрыть товар" disabled={busy}><Archive size={14} /></button>
+                      )}
+                      {canDelete && (
+                        <button type="button" onClick={() => remove(product)} className="btn-icon h-9 w-9 text-rose-600" aria-label="Удалить товар навсегда" disabled={busy}><Trash2 size={14} /></button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
-              <p className="font-display text-base font-semibold sm:w-24 sm:text-right">{Money.from(product.price).format()}</p>
-              <div className="flex gap-1.5">
-                <button type="button" onClick={() => openEdit(product)} className="btn-icon h-9 w-9" aria-label="Редактировать товар"><Pencil size={14} /></button>
-                {canDelete && (
-                  <button type="button" onClick={() => remove(product)} className="btn-icon h-9 w-9 text-rose-600" aria-label="Удалить товар" disabled={busy}><Trash2 size={14} /></button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
+          {visibleProducts.length === 0 && (
+            <p className="px-4 py-8 text-center text-xs text-muted">Товаров пока нет.</p>
+          )}
         </div>
       </div>
     </div>

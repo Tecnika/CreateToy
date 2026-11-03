@@ -17,11 +17,15 @@ export class LocalProductRepository implements ProductRepository {
     return this.storage.get<string[]>(this.removedKey, []);
   }
 
-  list(): Product[] {
+  listAll(): Product[] {
     const custom = this.custom();
     const customIds = new Set(custom.map((product) => product.id));
     const removed = new Set(this.removed());
     return [...PRODUCTS.filter((product) => !customIds.has(product.id) && !removed.has(product.id)), ...custom];
+  }
+
+  list(): Product[] {
+    return this.listAll().filter((product) => !product.archivedAt);
   }
 
   getById(id: string): Product | undefined {
@@ -39,6 +43,20 @@ export class LocalProductRepository implements ProductRepository {
     else custom.push(product);
     this.storage.set(this.key, custom);
     this.storage.set(this.removedKey, this.removed().filter((id) => id !== product.id));
+  }
+
+  archive(id: string): void {
+    const product = this.listAll().find((item) => item.id === id);
+    if (!product) throw new Error('Товар не найден.');
+    this.save({ ...product, archivedAt: new Date().toISOString() });
+  }
+
+  restore(id: string): void {
+    const product = this.listAll().find((item) => item.id === id);
+    if (!product) throw new Error('Товар не найден.');
+    const restored = { ...product };
+    delete restored.archivedAt;
+    this.save(restored);
   }
 
   remove(id: string): void {

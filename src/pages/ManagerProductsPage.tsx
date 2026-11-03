@@ -12,7 +12,7 @@ export function ManagerProductsPage() {
         eyebrow="Кабинет менеджера"
         title="Товары"
         accent="каталога"
-        description="Создавайте новые карточки и обновляйте цены, описания, параметры и праздники. Удаление товаров остаётся у администратора."
+        description="Создавайте новые карточки и обновляйте цены, описания, параметры и праздники. Скрыть товар из каталога можно, а восстановить — только администратору."
         aside={
           <div className="rounded-3xl border border-line bg-surface-2/60 p-5">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted">Вы вошли как</p>
@@ -25,7 +25,7 @@ export function ManagerProductsPage() {
       <ManagerNav />
 
       <section className="container-page mt-6">
-        <ProductManager showHeader={false} />
+        <ProductManager showHeader={false} canArchive />
       </section>
     </>
   );

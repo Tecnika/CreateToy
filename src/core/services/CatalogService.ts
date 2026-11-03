@@ -10,6 +10,14 @@ export class CatalogService {
     return this.repository.list();
   }
 
+  listAll(): Product[] {
+    return this.repository.listAll();
+  }
+
+  archived(): Product[] {
+    return this.repository.listAll().filter((product) => product.archivedAt);
+  }
+
   bySlug(slug: string): Product | undefined {
     return this.repository.getBySlug(slug);
   }
@@ -59,6 +67,14 @@ export class CatalogService {
 
   async save(product: Product): Promise<void> {
     await this.repository.save(product);
+  }
+
+  async archive(id: string): Promise<void> {
+    await this.repository.archive(id);
+  }
+
+  async restore(id: string): Promise<void> {
+    await this.repository.restore(id);
   }
 
   async remove(id: string): Promise<void> {

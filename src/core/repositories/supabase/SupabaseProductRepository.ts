@@ -2,7 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Product } from '../../domain/types';
 import type { ProductRepository } from '../types';
 import { supabaseError } from '../../supabase/errors';
-import { toProductRow } from '../../supabase/mappers';
+import { mapProductRow, toProductRow } from '../../supabase/mappers';
+import type { ProductRow } from '../../supabase/database';
 import type { SupabaseCache } from '../../supabase/store';
 
 export class SupabaseProductRepository implements ProductRepository {
@@ -11,8 +12,12 @@ export class SupabaseProductRepository implements ProductRepository {
     private readonly cache: SupabaseCache,
   ) {}
 
-  list(): Product[] {
+  listAll(): Product[] {
     return this.cache.products;
+  }
+
+  list(): Product[] {
+    return this.listAll().filter((product) => !product.archivedAt);
   }
 
   getById(id: string): Product | undefined {
@@ -31,9 +36,28 @@ export class SupabaseProductRepository implements ProductRepository {
     this.cache.upsertProduct(product);
   }
 
+  async archive(id: string): Promise<void> {
+    await this.setArchived(id, new Date().toISOString());
+  }
+
+  async restore(id: string): Promise<void> {
+    await this.setArchived(id, null);
+  }
+
   async remove(id: string): Promise<void> {
     const { error } = await this.client.from('products').delete().eq('id', id);
     if (error) throw supabaseError(error, 'Не удалось удалить товар.');
     this.cache.removeProduct(id);
+  }
+
+  private async setArchived(id: string, archivedAt: string | null): Promise<void> {
+    const { data, error } = await this.client
+      .from('products')
+      .update({ archived_at: archivedAt })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) throw supabaseError(error, 'Не удалось изменить видимость товара.');
+    this.cache.upsertProduct(mapProductRow(data as ProductRow));
   }
 }

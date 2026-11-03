@@ -11,9 +11,12 @@ export type MaybePromise<T> = T | Promise<T>;
 
 export interface ProductRepository {
   list(): Product[];
+  listAll(): Product[];
   getById(id: string): Product | undefined;
   getBySlug(slug: string): Product | undefined;
   save(product: Product): MaybePromise<void>;
+  archive(id: string): MaybePromise<void>;
+  restore(id: string): MaybePromise<void>;
   remove(id: string): MaybePromise<void>;
 }
 

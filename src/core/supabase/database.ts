@@ -38,6 +38,7 @@ export interface ProductRow {
   materials: string;
   size: string;
   featured: boolean;
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 }

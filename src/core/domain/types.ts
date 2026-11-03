@@ -61,6 +61,7 @@ export interface Product {
   materials: string;
   size: string;
   featured?: boolean;
+  archivedAt?: string;
 }
 
 export interface ConfiguratorOption {

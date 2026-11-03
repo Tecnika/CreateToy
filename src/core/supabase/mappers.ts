@@ -38,6 +38,7 @@ export function mapProductRow(row: ProductRow): Product {
     materials: row.materials,
     size: row.size,
     featured: row.featured,
+    archivedAt: row.archived_at ?? undefined,
   };
 }
 
@@ -58,6 +59,7 @@ export function toProductRow(product: Product) {
     materials: product.materials,
     size: product.size,
     featured: product.featured ?? false,
+    archived_at: product.archivedAt ?? null,
   };
 }
 
