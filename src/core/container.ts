@@ -17,6 +17,7 @@ import { CartService } from './services/CartService';
 import { CatalogService } from './services/CatalogService';
 import { ConfiguratorService } from './services/ConfiguratorService';
 import { OrderService } from './services/OrderService';
+import { ProductImageService } from './services/ProductImageService';
 import { SettingsService } from './services/SettingsService';
 import { ThemeService } from './services/ThemeService';
 import { UserService } from './services/UserService';
@@ -52,6 +53,7 @@ function createDemoServices(configError: Error | null = null) {
     settings: new SettingsService(settings),
     themes: themeService,
     configurator: new ConfiguratorService(templates),
+    productImages: new ProductImageService(),
     initialize: async () => {
       if (configError) throw configError;
       await authAdapter.initialize();
@@ -95,6 +97,7 @@ function createSupabaseServices(config: SupabaseConfig) {
     settings: new SettingsService(settings),
     themes: themeService,
     configurator: new ConfiguratorService(templates),
+    productImages: new ProductImageService(client),
     initialize,
   };
 }

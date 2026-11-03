@@ -62,6 +62,8 @@ export interface Product {
   size: string;
   featured?: boolean;
   archivedAt?: string;
+  inStock?: boolean;
+  imageUrl?: string;
 }
 
 export interface ConfiguratorOption {
@@ -99,6 +101,7 @@ export interface CartLineData {
   productTitle: string;
   productSlug: string;
   art: ProductArt;
+  imageUrl?: string;
   unitPrice: number;
   quantity: number;
   configuration: ConfiguratorValues;
@@ -136,6 +139,7 @@ export interface OrderItem {
   total: number;
   configurationLabel: string;
   art: ProductArt;
+  imageUrl?: string;
 }
 
 export interface OrderHistoryEntry {

@@ -2,9 +2,11 @@ import { ArrowUpRight, Clock3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Money } from '../../core/domain/Money';
 import type { Product } from '../../core/domain/types';
-import { SouvenirArt } from './SouvenirArt';
+import { ProductMedia } from './ProductMedia';
 
 export function ProductCard({ product }: { product: Product }) {
+  const inStock = product.inStock !== false;
+
   return (
     <Link
       to={`/product/${product.slug}`}
@@ -17,13 +19,15 @@ export function ProductCard({ product }: { product: Product }) {
         }}
       >
         <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_20%_20%,white_0,transparent_35%)]" />
-        <SouvenirArt
+        <ProductMedia
           art={product.art}
+          imageUrl={product.imageUrl}
           label={product.title}
-          className="absolute inset-0 transition duration-500 group-hover:scale-[1.04] group-hover:-rotate-1"
+          className={`absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04] group-hover:-rotate-1 ${inStock ? '' : 'opacity-70 grayscale-[35%]'}`}
         />
         <div className="absolute left-4 top-4 flex flex-wrap gap-2">
           {product.badge && <span className="badge bg-white/80 text-ink backdrop-blur">{product.badge}</span>}
+          {!inStock && <span className="badge bg-rose-600/90 text-white backdrop-blur">Нет в продаже</span>}
         </div>
         <span className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-white backdrop-blur">
           <Clock3 size={12} />

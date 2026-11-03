@@ -39,6 +39,8 @@ export interface ProductRow {
   size: string;
   featured: boolean;
   archived_at: string | null;
+  in_stock: boolean;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 }

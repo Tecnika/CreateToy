@@ -4,7 +4,7 @@ import { services } from '../core/container';
 import { Money } from '../core/domain/Money';
 import { useTheme } from '../state/ThemeContext';
 import { ProductCard } from '../components/product/ProductCard';
-import { SouvenirArt } from '../components/product/SouvenirArt';
+import { ProductMedia } from '../components/product/ProductMedia';
 import { SectionHeading } from '../components/ui/SectionHeading';
 import { LinkButton } from '../components/ui/Button';
 
@@ -98,9 +98,21 @@ export function HomePage() {
                       background: `linear-gradient(145deg, ${heroProduct.art.colors[1]} 0%, ${heroProduct.art.colors[0]} 100%)`,
                     }}
                   >
-                    <SouvenirArt art={heroProduct.art} label={heroProduct.title} className="aspect-[1.05]" />
-                    <span className="absolute left-5 top-5 rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink backdrop-blur">
-                      {theme.data.shortName}
+                    <ProductMedia
+                      art={heroProduct.art}
+                      imageUrl={heroProduct.imageUrl}
+                      label={heroProduct.title}
+                      className="aspect-[1.05] w-full object-cover"
+                    />
+                    <span className="absolute left-5 top-5 flex flex-wrap gap-2">
+                      <span className="rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink backdrop-blur">
+                        {theme.data.shortName}
+                      </span>
+                      {heroProduct.inStock === false && (
+                        <span className="rounded-full bg-rose-600/90 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-white backdrop-blur">
+                          Нет в продаже
+                        </span>
+                      )}
                     </span>
                   </div>
                   <div className="p-5">

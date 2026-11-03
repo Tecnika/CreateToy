@@ -5,7 +5,7 @@ import { Money } from '../core/domain/Money';
 import { useTheme } from '../state/ThemeContext';
 import { Configurator } from '../components/configurator/Configurator';
 import { ProductCard } from '../components/product/ProductCard';
-import { SouvenirArt } from '../components/product/SouvenirArt';
+import { ProductMedia } from '../components/product/ProductMedia';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LinkButton } from '../components/ui/Button';
 
@@ -28,6 +28,7 @@ export function ProductPage() {
   }
 
   const related = services.catalog.related(product);
+  const inStock = product.inStock !== false;
   const productThemes = themes.filter((theme) => product.holidayIds.includes(theme.id));
   const features = [
     { icon: Clock3, title: 'Печать', text: `${product.productionDays}–${product.productionDays + 2} дня` },
@@ -51,9 +52,15 @@ export function ProductPage() {
                 background: `radial-gradient(circle at 78% 18%, ${product.art.colors[2]} 0, transparent 45%), linear-gradient(145deg, ${product.art.colors[1]} 0%, ${product.art.colors[0]} 100%)`,
               }}
             >
-              <SouvenirArt art={product.art} label={product.title} className="aspect-square" />
+              <ProductMedia
+                art={product.art}
+                imageUrl={product.imageUrl}
+                label={product.title}
+                className="aspect-square w-full object-cover"
+              />
               <div className="absolute left-5 top-5 flex flex-wrap gap-2">
                 {product.badge && <span className="badge bg-white/85 text-ink backdrop-blur">{product.badge}</span>}
+                {!inStock && <span className="badge bg-rose-600/90 text-white backdrop-blur">Нет в продаже</span>}
                 {productThemes.map((theme) => (
                   <span key={theme.id} className="badge bg-black/25 text-white backdrop-blur">
                     {theme.data.shortName}
@@ -86,6 +93,12 @@ export function ProductPage() {
               <span className="font-display text-3xl font-semibold">{Money.from(product.price).format()}</span>
               <span className="pb-1 text-xs text-muted">базовая цена · без доставки</span>
             </div>
+
+            {!inStock && (
+              <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+                Нет в продаже. Товар временно недоступен для заказа.
+              </div>
+            )}
 
             <div className="mt-6 grid gap-3 rounded-3xl border border-line bg-surface p-4 text-sm">
               {[

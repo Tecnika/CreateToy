@@ -9,7 +9,7 @@ import { useSettings } from '../state/SettingsContext';
 import { PageHero } from '../components/ui/PageHero';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LinkButton } from '../components/ui/Button';
-import { SouvenirArt } from '../components/product/SouvenirArt';
+import { ProductMedia } from '../components/product/ProductMedia';
 
 interface AddressDraft {
   label: string;
@@ -61,6 +61,15 @@ export function CheckoutPage() {
     [user?.addresses, selectedAddressId],
   );
 
+  const unavailableLines = useMemo(
+    () =>
+      lines.filter((line) => {
+        const product = services.catalog.byId(line.productId);
+        return !product || product.inStock === false;
+      }),
+    [lines],
+  );
+
   function updateDraft(key: keyof AddressDraft, value: string) {
     setAddressDraft((current) => ({ ...current, [key]: value }));
   }
@@ -68,6 +77,10 @@ export function CheckoutPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!user) return;
+    if (unavailableLines.length > 0) {
+      setErrors([`Нет в продаже: ${unavailableLines.map((line) => line.productTitle).join(', ')}. Удалите эти товары из корзины.`]);
+      return;
+    }
     const nextErrors: string[] = [];
     if (customerName.trim().length < 2) nextErrors.push('Укажите имя получателя.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) nextErrors.push('Укажите корректный email.');
@@ -162,6 +175,12 @@ export function CheckoutPage() {
         <Link to="/cart" className="mb-5 inline-flex items-center gap-1.5 text-xs font-bold text-muted transition hover:text-accent">
           <ArrowLeft size={15} /> Вернуться в корзину
         </Link>
+
+        {unavailableLines.length > 0 && (
+          <div className="mb-5 rounded-3xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">
+            Нет в продаже: {unavailableLines.map((line) => line.productTitle).join(', ')}. Удалите эти товары из корзины.
+          </div>
+        )}
 
         {errors.length > 0 && (
           <div className="mb-5 rounded-3xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">
@@ -371,21 +390,29 @@ export function CheckoutPage() {
           <aside className="surface-card sticky top-28 p-5 sm:p-6">
             <h2 className="display-title text-xl">Ваш заказ</h2>
             <div className="mt-4 max-h-72 space-y-3 overflow-y-auto pr-1">
-              {lines.map((line) => (
-                <div key={line.id} className="flex items-center gap-3">
-                  <div
-                    className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl"
-                    style={{ background: `linear-gradient(145deg, ${line.art.colors[1]}, ${line.art.colors[0]})` }}
-                  >
-                    <SouvenirArt art={line.art} label={line.productTitle} className="h-full w-full" />
+              {lines.map((line) => {
+                const product = services.catalog.byId(line.productId);
+                return (
+                  <div key={line.id} className="flex items-center gap-3">
+                    <div
+                      className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl"
+                      style={{ background: `linear-gradient(145deg, ${line.art.colors[1]}, ${line.art.colors[0]})` }}
+                    >
+                      <ProductMedia
+                        art={line.art}
+                        imageUrl={product ? product.imageUrl : line.imageUrl}
+                        label={line.productTitle}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold">{line.productTitle}</p>
+                      <p className="text-xs text-muted">{line.quantity} шт.</p>
+                    </div>
+                    <p className="text-xs font-bold">{line.unitPrice * line.quantity} ₽</p>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold">{line.productTitle}</p>
-                    <p className="text-xs text-muted">{line.quantity} шт.</p>
-                  </div>
-                  <p className="text-xs font-bold">{line.unitPrice * line.quantity} ₽</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mt-4 space-y-2.5 border-t border-line pt-4 text-sm">
@@ -403,7 +430,7 @@ export function CheckoutPage() {
               </div>
             </div>
 
-            <button type="submit" className="btn-primary mt-5 w-full" disabled={submitting}>
+            <button type="submit" className="btn-primary mt-5 w-full" disabled={submitting || unavailableLines.length > 0}>
               {submitting ? 'Создаём заказ...' : 'Создать заказ'}
               {!submitting && <Check size={17} />}
             </button>

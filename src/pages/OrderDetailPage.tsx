@@ -7,7 +7,7 @@ import { useAuth } from '../state/AuthContext';
 import { useSettings } from '../state/SettingsContext';
 import { OrderProgress, OrderTimeline } from '../components/order/OrderTimeline';
 import { StatusBadge } from '../components/ui/StatusBadge';
-import { SouvenirArt } from '../components/product/SouvenirArt';
+import { ProductMedia } from '../components/product/ProductMedia';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LinkButton } from '../components/ui/Button';
 import { formatDate, formatDateTime } from '../utils/format';
@@ -130,7 +130,12 @@ export function OrderDetailPage() {
                       className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl"
                       style={{ background: `linear-gradient(145deg, ${item.art.colors[1]}, ${item.art.colors[0]})` }}
                     >
-                      <SouvenirArt art={item.art} label={item.title} className="h-full w-full" />
+                      <ProductMedia
+                        art={item.art}
+                        imageUrl={item.imageUrl}
+                        label={item.title}
+                        className="h-full w-full object-cover"
+                      />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-extrabold">{item.title}</p>

@@ -39,6 +39,8 @@ export function mapProductRow(row: ProductRow): Product {
     size: row.size,
     featured: row.featured,
     archivedAt: row.archived_at ?? undefined,
+    inStock: row.in_stock ?? true,
+    imageUrl: row.image_url ?? undefined,
   };
 }
 
@@ -60,6 +62,8 @@ export function toProductRow(product: Product) {
     size: product.size,
     featured: product.featured ?? false,
     archived_at: product.archivedAt ?? null,
+    in_stock: product.inStock ?? true,
+    image_url: product.imageUrl ?? null,
   };
 }
 

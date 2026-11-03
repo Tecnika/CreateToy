@@ -8,6 +8,7 @@ const line: CartLineData = {
   productTitle: 'Своя фигурка',
   productSlug: 'custom-figure',
   art: { kind: 'gift', colors: ['#c45d3a', '#f2b84b', '#f7f0e6'] },
+  imageUrl: 'https://example.com/photo.webp',
   unitPrice: 1990,
   quantity: 2,
   configuration: { inscription: 'Маша' },
@@ -43,6 +44,7 @@ describe('Order', () => {
     const order = createOrder();
     expect(order.data.id).toBeTruthy();
     expect(order.data.items[0].total).toBe(3980);
+    expect(order.data.items[0].imageUrl).toBe('https://example.com/photo.webp');
     expect(order.data.subtotal).toBe(3980);
     expect(order.data.shippingCost).toBe(0);
     expect(order.data.total).toBe(3980);

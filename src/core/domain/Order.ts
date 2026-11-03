@@ -38,6 +38,7 @@ export class Order {
         total: unitPrice.multiply(line.quantity).amount,
         configurationLabel: line.configurationLabel,
         art: line.art,
+        imageUrl: line.imageUrl,
       };
     });
 

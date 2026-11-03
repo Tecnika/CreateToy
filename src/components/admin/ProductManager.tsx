@@ -1,11 +1,11 @@
-import { useState, type FormEvent } from 'react';
-import { Archive, Check, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { Archive, Ban, Check, CircleCheck, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { services } from '../../core/container';
 import { Money } from '../../core/domain/Money';
 import type { ArtKind, Product } from '../../core/domain/types';
 import { useTheme } from '../../state/ThemeContext';
-import { SouvenirArt } from '../product/SouvenirArt';
+import { ProductMedia } from '../product/ProductMedia';
 
 interface ProductManagerProps {
   canDelete?: boolean;
@@ -68,15 +68,19 @@ export function ProductManager({
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [initialImageUrl, setInitialImageUrl] = useState<string | undefined>(undefined);
   const [showArchived, setShowArchived] = useState(false);
 
   const allProducts = services.catalog.listAll();
   const products = services.catalog.list();
   const archived = allProducts.filter((product) => product.archivedAt);
+  const outOfStock = products.filter((product) => product.inStock === false);
   const visibleProducts = canRestore && showArchived ? allProducts : products;
 
   function openNew() {
     setDraft(createDraft(templates[0]?.id ?? 'figure'));
+    setInitialImageUrl(undefined);
     setMessage('');
     setError('');
   }
@@ -87,6 +91,7 @@ export function ProductManager({
       art: { ...product.art, colors: [...product.art.colors] as Product['art']['colors'] },
       holidayIds: [...product.holidayIds],
     });
+    setInitialImageUrl(product.imageUrl);
     setMessage('');
     setError('');
   }
@@ -105,6 +110,29 @@ export function ProductManager({
       'holidayIds',
       draft.holidayIds.includes(id) ? draft.holidayIds.filter((item) => item !== id) : [...draft.holidayIds, id],
     );
+  }
+
+  async function uploadPhoto(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || !draft || uploading) return;
+
+    setUploading(true);
+    setError('');
+    try {
+      const url = await services.productImages.upload(file, draft.id);
+      update('imageUrl', url);
+      setMessage('Фото загружено. Сохраните товар, чтобы применить.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось загрузить фото.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function clearPhoto() {
+    update('imageUrl', undefined);
+    setMessage('Фото будет убрано после сохранения товара.');
   }
 
   async function save(event: FormEvent) {
@@ -137,11 +165,33 @@ export function ProductManager({
         subtitle: draft.subtitle.trim(),
         description: draft.description.trim(),
       });
+      if (initialImageUrl && initialImageUrl !== draft.imageUrl) {
+        void services.productImages.remove(initialImageUrl).catch((caught) => {
+          console.warn('Не удалось удалить старое фото товара:', caught);
+        });
+      }
+      setInitialImageUrl(draft.imageUrl);
       setVersion((value) => value + 1);
       setDraft(null);
       setMessage('Товар сохранён.');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Не удалось сохранить товар.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggleStock(product: Product) {
+    if (busy) return;
+    const nextInStock = product.inStock === false;
+    setBusy(true);
+    setError('');
+    try {
+      await services.catalog.save({ ...product, inStock: nextInStock });
+      setVersion((value) => value + 1);
+      setMessage(nextInStock ? 'Товар снова в продаже.' : 'Товар снят с продажи.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось изменить статус продажи.');
     } finally {
       setBusy(false);
     }
@@ -185,6 +235,11 @@ export function ProductManager({
     setError('');
     try {
       await services.catalog.remove(product.id);
+      if (product.imageUrl) {
+        void services.productImages.remove(product.imageUrl).catch((caught) => {
+          console.warn('Не удалось удалить фото товара:', caught);
+        });
+      }
       setVersion((value) => value + 1);
       setMessage('Товар удалён навсегда.');
     } catch (caught) {
@@ -226,7 +281,7 @@ export function ProductManager({
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="display-title text-2xl">{products.some((product) => product.id === draft.id) ? 'Редактировать товар' : 'Новый товар'}</h2>
-              <p className="mt-1 text-xs text-muted">Превью генерируется из выбранного образа и цветов.</p>
+              <p className="mt-1 text-xs text-muted">Можно загрузить фото или оставить сгенерированную графику из образа и цветов.</p>
             </div>
             <button type="button" onClick={() => setDraft(null)} className="btn-icon h-9 w-9" aria-label="Закрыть форму">
               <X size={16} />
@@ -338,7 +393,35 @@ export function ProductManager({
                 className="overflow-hidden rounded-3xl border border-line"
                 style={{ background: `linear-gradient(145deg, ${draft.art.colors[1]}, ${draft.art.colors[0]})` }}
               >
-                <SouvenirArt art={draft.art} label={draft.title || 'Превью'} className="aspect-square" />
+                <ProductMedia
+                  art={draft.art}
+                  imageUrl={draft.imageUrl}
+                  label={draft.title || 'Превью'}
+                  className="aspect-square w-full object-cover"
+                />
+              </div>
+              <div className="rounded-2xl border border-line bg-surface-2/50 p-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted">Фото товара</p>
+                <p className="mt-1 text-[10px] leading-4 text-muted">
+                  JPG, PNG или WebP до 10 МБ. Без фото показывается сгенерированная графика.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <label className={`btn-secondary px-3 py-2 text-[10px] ${uploading || busy ? 'pointer-events-none opacity-50' : 'cursor-pointer'}`}>
+                    {uploading ? 'Загружаем...' : draft.imageUrl ? 'Заменить фото' : 'Загрузить фото'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={uploadPhoto}
+                      disabled={uploading || busy}
+                    />
+                  </label>
+                  {draft.imageUrl && (
+                    <button type="button" onClick={clearPhoto} className="btn-secondary px-3 py-2 text-[10px]" disabled={uploading || busy}>
+                      Убрать фото
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="rounded-2xl border border-line bg-surface-2/50 p-3">
                 <p className="text-sm font-extrabold">{draft.title || 'Название товара'}</p>
@@ -355,7 +438,7 @@ export function ProductManager({
 
           <div className="mt-5 flex justify-end gap-2">
             <button type="button" onClick={() => setDraft(null)} className="btn-secondary px-4 py-2.5 text-xs">Отмена</button>
-            <button type="submit" className="btn-primary px-4 py-2.5 text-xs" disabled={busy}><Check size={15} /> {busy ? 'Сохраняем...' : 'Сохранить товар'}</button>
+            <button type="submit" className="btn-primary px-4 py-2.5 text-xs" disabled={busy || uploading}><Check size={15} /> {busy ? 'Сохраняем...' : uploading ? 'Загружаем фото...' : 'Сохранить товар'}</button>
           </div>
         </form>
       )}
@@ -364,6 +447,7 @@ export function ProductManager({
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface-2/50 px-4 py-3 text-xs font-bold text-muted">
           <span>
             {visibleProducts.length} товаров · <span className="text-ink">{visibleProducts.filter((product) => product.featured).length}</span> в подборке
+            {outOfStock.length > 0 && <> · <span className="text-amber-600">{outOfStock.length} нет в продаже</span></>}
             {archived.length > 0 && <> · <span className="text-rose-600">{archived.length} скрыто</span></>}
           </span>
           {canRestore && archived.length > 0 && (
@@ -375,18 +459,25 @@ export function ProductManager({
         <div className="divide-y divide-line">
           {visibleProducts.map((product) => {
             const isArchived = Boolean(product.archivedAt);
+            const inStock = product.inStock !== false;
             return (
               <div key={product.id} className={`flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:gap-4 ${isArchived ? 'bg-surface-2/40' : ''}`}>
                 <div
-                  className={`h-16 w-16 shrink-0 overflow-hidden rounded-2xl ${isArchived ? 'opacity-50 grayscale' : ''}`}
+                  className={`h-16 w-16 shrink-0 overflow-hidden rounded-2xl ${isArchived ? 'opacity-50 grayscale' : !inStock ? 'opacity-80 grayscale-[35%]' : ''}`}
                   style={{ background: `linear-gradient(145deg, ${product.art.colors[1]}, ${product.art.colors[0]})` }}
                 >
-                  <SouvenirArt art={product.art} label={product.title} className="h-full w-full" />
+                  <ProductMedia
+                    art={product.art}
+                    imageUrl={product.imageUrl}
+                    label={product.title}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-extrabold">{product.title}</p>
                     {product.badge && <span className="badge">{product.badge}</span>}
+                    {!inStock && !isArchived && <span className="badge bg-amber-100 text-amber-800">Нет в продаже</span>}
                     {isArchived && <span className="badge bg-rose-100 text-rose-700">Скрыт</span>}
                   </div>
                   <p className="mt-0.5 truncate text-xs text-muted">{product.slug} · {product.category} · {product.materials}</p>
@@ -403,6 +494,15 @@ export function ProductManager({
                   ) : (
                     <>
                       <button type="button" onClick={() => openEdit(product)} className="btn-icon h-9 w-9" aria-label="Редактировать товар"><Pencil size={14} /></button>
+                      <button
+                        type="button"
+                        onClick={() => toggleStock(product)}
+                        className={`btn-icon h-9 w-9 ${inStock ? 'text-sky-600' : 'text-emerald-600'}`}
+                        aria-label={inStock ? 'Снять с продажи' : 'Вернуть в продажу'}
+                        disabled={busy}
+                      >
+                        {inStock ? <Ban size={14} /> : <CircleCheck size={14} />}
+                      </button>
                       {canArchive && (
                         <button type="button" onClick={() => archive(product)} className="btn-icon h-9 w-9 text-amber-600" aria-label="Скрыть товар" disabled={busy}><Archive size={14} /></button>
                       )}

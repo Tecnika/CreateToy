@@ -7,7 +7,7 @@ import { useCart } from '../../state/CartContext';
 import { hashString } from '../../utils/hash';
 import { Button, LinkButton } from '../ui/Button';
 import { QuantityControl } from '../ui/QuantityControl';
-import { SouvenirArt } from '../product/SouvenirArt';
+import { ProductMedia } from '../product/ProductMedia';
 
 interface ConfiguratorProps {
   product: Product;
@@ -16,6 +16,7 @@ interface ConfiguratorProps {
 
 export function Configurator({ product, template }: ConfiguratorProps) {
   const { addLine } = useCart();
+  const inStock = product.inStock !== false;
   const [values, setValues] = useState<ConfiguratorValues>(() => template.defaultValues());
   const [quantity, setQuantity] = useState(1);
   const [errors, setErrors] = useState<string[]>([]);
@@ -37,6 +38,7 @@ export function Configurator({ product, template }: ConfiguratorProps) {
   }
 
   function handleAdd() {
+    if (!inStock) return;
     const validation = template.validate(values);
     if (validation.length > 0) {
       setErrors(validation);
@@ -51,6 +53,7 @@ export function Configurator({ product, template }: ConfiguratorProps) {
       productTitle: product.title,
       productSlug: product.slug,
       art: product.art,
+      imageUrl: product.imageUrl,
       unitPrice: unitPrice.amount,
       quantity,
       configuration: values,
@@ -101,7 +104,12 @@ export function Configurator({ product, template }: ConfiguratorProps) {
               background: `linear-gradient(145deg, ${product.art.colors[1]} 0%, ${product.art.colors[0]} 100%)`,
             }}
           >
-            <SouvenirArt art={product.art} label={`${product.title} — предпросмотр`} className="aspect-square" />
+            <ProductMedia
+              art={product.art}
+              imageUrl={product.imageUrl}
+              label={`${product.title} — предпросмотр`}
+              className="aspect-square w-full object-cover"
+            />
             {textPreview && (
               <div className="absolute inset-x-5 bottom-5 rounded-2xl border border-white/30 bg-black/25 px-4 py-3 text-center backdrop-blur">
                 <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/60">Ваша надпись</p>
@@ -120,9 +128,9 @@ export function Configurator({ product, template }: ConfiguratorProps) {
               <QuantityControl value={quantity} onChange={setQuantity} />
             </div>
 
-            <Button className="mt-4 w-full" onClick={handleAdd}>
-              {added ? <Check size={17} /> : <ShoppingBag size={17} />}
-              {added ? 'Добавлено в корзину' : 'Добавить в корзину'}
+            <Button className="mt-4 w-full" onClick={handleAdd} disabled={!inStock}>
+              {inStock ? added ? <Check size={17} /> : <ShoppingBag size={17} /> : null}
+              {!inStock ? 'Нет в продаже' : added ? 'Добавлено в корзину' : 'Добавить в корзину'}
             </Button>
 
             {added && (
