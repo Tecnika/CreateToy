@@ -45,7 +45,11 @@ async function requestWithTimeout(input: FetchInput, init?: RequestInit): Promis
   }
 
   try {
-    const response = await fetch(input, { ...init, signal: controller.signal });
+    const response = await fetch(input, {
+      ...init,
+      credentials: init?.credentials ?? 'omit',
+      signal: controller.signal,
+    });
     const body = response.status === 204 || response.status === 304 ? null : await response.arrayBuffer();
     const headers = new Headers(response.headers);
     headers.delete('content-encoding');
@@ -69,8 +73,14 @@ async function fetchWithTimeout(input: FetchInput, init?: RequestInit): Promise<
   try {
     return await requestWithTimeout(input, init);
   } catch (error) {
-    if (method !== 'GET' || init?.signal?.aborted || !isTimeout(error)) throw error;
-    return await requestWithTimeout(input, init);
+    if (method !== 'GET' || init?.signal?.aborted || !isTimeout(error)) {
+      throw isTimeout(error) ? new Error(TIMEOUT_MESSAGE) : error;
+    }
+    try {
+      return await requestWithTimeout(input, init);
+    } catch (retryError) {
+      throw isTimeout(retryError) ? new Error(TIMEOUT_MESSAGE) : retryError;
+    }
   }
 }
 
