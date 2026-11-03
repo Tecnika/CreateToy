@@ -77,8 +77,12 @@ export function CheckoutPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!user) return;
-    if (unavailableLines.length > 0) {
-      setErrors([`Нет в продаже: ${unavailableLines.map((line) => line.productTitle).join(', ')}. Удалите эти товары из корзины.`]);
+    const unavailable = lines.filter((line) => {
+      const product = services.catalog.byId(line.productId);
+      return !product || product.inStock === false;
+    });
+    if (unavailable.length > 0) {
+      setErrors([`Нет в продаже: ${unavailable.map((line) => line.productTitle).join(', ')}. Удалите эти товары из корзины.`]);
       return;
     }
     const nextErrors: string[] = [];
